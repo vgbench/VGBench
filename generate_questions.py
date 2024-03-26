@@ -8,9 +8,13 @@ import PIL.Image
 import os
 import concurrent.futures
 import queue
+from keys import keys
 
-keys = [
-]
+# keys = [
+#     dict(
+#         GPT4V_KEY="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+#         GPT4_V_ENDPOINT='https://xxxx-chat-west-us.openai.azure.com/'
+#     ),
 
 available_clients = queue.Queue()
 

@@ -10,26 +10,21 @@ import concurrent.futures
 import queue
 from keys import keys
 
-# keys = [
-#     dict(
-#         GPT4V_KEY="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-#         GPT4_V_ENDPOINT='https://xxxx-chat-west-us.openai.azure.com/'
-#     ),
 
 available_clients = queue.Queue()
 
-question_type = "relation"
+question_type = "concept"
 
 for key in keys:
     available_clients.put(AzureOpenAI(
-        api_version="2023-07-01-preview",
+        api_version="2024-02-01",
         azure_endpoint=key["GPT4_V_ENDPOINT"],
         api_key=key["GPT4V_KEY"]
     ))
 
 
 def generate_system_message(qtype):
-    if qtype == "general":
+    if qtype == "concept":
         json_example = {"q": "What is the type of this image?",
                         "o": ["A: Topological Figures", "B: Graphical Figures", "C: Geometric Figures", "D: Three-Dimensional Figures"],
                         "a": "B"}
@@ -176,9 +171,9 @@ def data_loader(limit):
 
 def main():
     # with concurrent.futures.ThreadPoolExecutor(max_workers=available_clients.qsize()) as executor:
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         results = list(executor.map(
-            process_iamge_wrapper, data_loader(limit=20)))
+            process_iamge_wrapper, data_loader(limit=1000)))
     print(results)
     with open("questions_%s.json" % question_type, "w") as f:
         json.dump(results, f)

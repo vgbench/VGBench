@@ -7,20 +7,21 @@ import pdf2image
 import PIL.Image
 import PIL.ImageChops
 import re
+import typing
 
 
 def render_tikz(code) -> PIL.Image.Image:
     print(code)
     pattern = r'(\\begin\{tikzpicture\}.*?\\end\{tikzpicture\})'
     matches = re.findall(pattern, code, re.DOTALL)
-    if len(matches)>1:
+    if len(matches) > 1:
         print("Error: more than 1 tikz picture is found")
         return None
-    elif len(matches) ==0:
+    elif len(matches) == 0:
         print("Error: no tikz picture is found")
         return None
     trimed_code = matches[0]
-    #trimed_code = re.search(pattern, code, re.DOTALL).group(1).strip()
+    # trimed_code = re.search(pattern, code, re.DOTALL).group(1).strip()
     # trimed_code = '\n'.join(trimed_code.split("\n")[1:])
     template = """
     \\documentclass[11pt]{article}
@@ -71,9 +72,9 @@ def render_tikz(code) -> PIL.Image.Image:
     return img[0]
 
 
-def ask_gpt(client: OpenAI, messages: typing.List[typing.Dict[str, str]]):
+def ask_gpt(client: OpenAI, messages: typing.List[typing.Dict[str, str]], model: typing.Literal["gpt-35-turbo", "gpt-4", "gpt-4-32k", "gpt-4v"] = "gpt-4v"):
     completion = client.chat.completions.create(
-        model="gpt-4v",
+        model=model,
         messages=messages,
         max_tokens=4096
     )

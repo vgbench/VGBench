@@ -9,17 +9,15 @@ import os
 import concurrent.futures
 import queue
 from keys import keys
-
+import argparse
 
 available_clients = queue.Queue()
 
-question_type = "concept"
-
-for key in keys:
+for key in keys['gpt-4v']:
     available_clients.put(AzureOpenAI(
         api_version="2024-02-01",
-        azure_endpoint=key["GPT4_V_ENDPOINT"],
-        api_key=key["GPT4V_KEY"]
+        azure_endpoint=key["GPT_ENDPOINT"],
+        api_key=key["GPT_KEY"]
     ))
 
 
@@ -94,6 +92,7 @@ def generate_system_message(qtype):
             Another example of acceptable question is \"In which direction is this circle relative to the rectangle?\"\
             The examples are just for illustrating the format, not for content.\
             Your question should test the model's ability to recognize the relationship between different objects in the image.\
+            The understanding of those relationships should be required to answer the question correctly.\
             The relation could be relation in positions or the relation in logic.\
             Ensuring that the correct answer is straightforward to identify for someone who actually view this image.\
             You are NOT allowed to ask questions about any specific object in the image.\
@@ -103,7 +102,7 @@ def generate_system_message(qtype):
         raise "Unknown type %s" % qtype
 
 
-def process_image(client: OpenAI, caption: str, img: PIL.Image):
+def process_image(client: OpenAI, caption: str, img: PIL.Image, q_type: str):
     buffered = BytesIO()
     img.save(buffered, format="PNG")
     image_base64 = base64.b64encode(buffered.getvalue()).decode()
@@ -111,7 +110,7 @@ def process_image(client: OpenAI, caption: str, img: PIL.Image):
     messages = [
         {
             "role": "system",
-            "content": generate_system_message(question_type)
+            "content": generate_system_message(q_type)
         },
         {
             "role": "user",
@@ -126,7 +125,7 @@ def process_image(client: OpenAI, caption: str, img: PIL.Image):
             ]
         }
     ]
-    response = json.loads(utils.ask_gpt(client=client, messages=messages))
+    response = json.loads(utils.ask_gpt(client=client, messages=messages, model="gpt-4v"))
     # print(response)
     result = {}
     result['q'] = response['q']
@@ -138,12 +137,12 @@ def process_image(client: OpenAI, caption: str, img: PIL.Image):
 
 
 def process_iamge_wrapper(args):
-    idx, caption, img = args
+    idx, caption, img, q_type = args
     result = None
     while result is None:
         client = available_clients.get()
         try:
-            result = process_image(client, caption, img)
+            result = process_image(client, caption, img, q_type)
         except:
             pass
         available_clients.put(client)
@@ -152,7 +151,7 @@ def process_iamge_wrapper(args):
     return result
 
 
-def data_loader(limit):
+def data_loader(q_type, limit):
     idx = 0
     cnt = 0
     dataset = json.load(open("/home/zbc/research/datasets/datikz.json"))
@@ -164,18 +163,27 @@ def data_loader(limit):
             continue
         caption = dataset[idx]['caption']
         img = PIL.Image.open(img_path)
-        yield (idx, caption, img)
+        yield (idx, caption, img, q_type)
         idx += 1
         cnt += 1
 
+def default_argument_parser():
+    parser = argparse.ArgumentParser(description="generate questions")
+    parser.add_argument(
+        "--q-type", default="", required=True, help="the type of questions")
+    return parser
+
+
 
 def main():
+    args = default_argument_parser().parse_args()
+    q_type = args.q_type
     # with concurrent.futures.ThreadPoolExecutor(max_workers=available_clients.qsize()) as executor:
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         results = list(executor.map(
-            process_iamge_wrapper, data_loader(limit=1000)))
+            process_iamge_wrapper, data_loader(q_type, limit=1200)))
     print(results)
-    with open("questions_%s.json" % question_type, "w") as f:
+    with open("data/questions_%s.json" % q_type, "w") as f:
         json.dump(results, f)
 
 

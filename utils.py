@@ -76,7 +76,8 @@ def ask_gpt(client: OpenAI, messages: typing.List[typing.Dict[str, str]], model:
     completion = client.chat.completions.create(
         model=model,
         messages=messages,
-        max_tokens=4096
+        max_tokens=4096,
+        temperature=0
     )
     assert (completion.choices[0].finish_reason == "stop")
     return completion.choices[0].message.content

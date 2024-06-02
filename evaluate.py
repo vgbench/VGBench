@@ -28,6 +28,14 @@ def multi_ask(messages, model="gpt-4"):
         break
     return response
 
+def init_client(model):
+    for key in keys[model]:
+        available_clients.put(AzureOpenAI(
+            api_version="2024-02-01",
+            azure_endpoint=key["GPT_ENDPOINT"],
+            api_key=key["GPT_KEY"]
+        ))
+
 
 def default_argument_parser():
     parser = argparse.ArgumentParser(description="convert json to spreadsheet")
@@ -164,13 +172,6 @@ def signal_handler(sig, frame):
     os.killpg(0, signal.SIGTERM)
 
 
-def init_client(model):
-    for key in keys[model]:
-        available_clients.put(AzureOpenAI(
-            api_version="2024-02-01",
-            azure_endpoint=key["GPT_ENDPOINT"],
-            api_key=key["GPT_KEY"]
-        ))
 
 
 def main():

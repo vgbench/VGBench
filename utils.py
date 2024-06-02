@@ -8,6 +8,7 @@ import PIL.Image
 import PIL.ImageChops
 import re
 import typing
+import queue
 
 
 def render_tikz(code) -> PIL.Image.Image:

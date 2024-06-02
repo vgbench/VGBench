@@ -31,21 +31,6 @@ def init_client(model: typing.Literal["gpt-4", "gpt-4v"]):
             api_key=key["GPT_KEY"]
         ))
 
-
-def generate(g_type: typing.Literal["svg"]):
-    if type == "svg":
-        messages = [
-            {
-                "role": "system",
-                "content": "Generate a %s based on the caption below"%g_type
-            },{
-                "role": "user",
-                "content": ""
-            }]
-        response = multi_ask(messages)
-        print(response)
-
-
 def main():
     init_client("gpt-4")
     generate("svg")

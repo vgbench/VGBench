@@ -4,6 +4,7 @@ from keys import keys
 from openai import AzureOpenAI, OpenAI
 import typing
 import queue
+import json
 
 available_clients = queue.Queue()
 
@@ -32,23 +33,26 @@ def init_client(model: typing.Literal["gpt-4", "gpt-4v"]):
         ))
 
 
-def generate(g_type: typing.Literal["svg"]):
-    if type == "svg":
+def generate(g_type: typing.Literal["svg"], caption: str):
+    if g_type == "svg":
         messages = [
             {
                 "role": "system",
-                "content": "Generate a %s based on the caption below"%g_type
+                "content": "Generate a %s based on the caption below. You should output the compilable code without any additional information."%g_type
             },{
                 "role": "user",
-                "content": ""
+                "content": caption
             }]
         response = multi_ask(messages)
-        print(response)
+        return response
 
 
 def main():
     init_client("gpt-4")
-    generate("svg")
+    caption_data = json.load(open("data/svg-gen/captions.json"))
+    test_key = list(caption_data.keys())[0]
+    test_caption = caption_data[test_key]
+    print(generate("svg", test_caption))
 
 
 if __name__ == '__main__':

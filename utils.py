@@ -9,9 +9,23 @@ import PIL.ImageChops
 import re
 import typing
 import queue
+import io
 
+def render_graphviz(code: str) ->PIL.Image.Image:
+    command = ['dot', '-Tpng']
+    p = subprocess.Popen(command, stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    stdout, stderr = p.communicate(input=code.encode())
+    if p.returncode != 0:
+        return None
+    buffer = io.BytesIO(stdout)
+    try:
+        image = PIL.Image.open(buffer)
+    except:
+        return None
+    return image
 
-def render_tikz(code) -> PIL.Image.Image:
+def render_tikz(code: str) -> PIL.Image.Image:
     print(code)
     pattern = r'(\\begin\{tikzpicture\}.*?\\end\{tikzpicture\})'
     matches = re.findall(pattern, code, re.DOTALL)

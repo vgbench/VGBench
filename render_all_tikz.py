@@ -8,7 +8,7 @@ def main():
         print(i)
         code = sample['code']
         caption = sample['caption']
-        out_file_path = os.path.join("pngs", "%d.png"%i)
+        out_file_path = os.path.join("pngs/tikz", "%d.png"%i)
         if os.path.exists(out_file_path):
             continue
         # print(caption)

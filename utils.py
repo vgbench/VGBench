@@ -15,7 +15,10 @@ def render_graphviz(code: str) ->PIL.Image.Image:
     command = ['dot', '-Tpng']
     p = subprocess.Popen(command, stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    stdout, stderr = p.communicate(input=code.encode())
+    try:
+        stdout, stderr = p.communicate(input=code.encode(), timeout=3)
+    except:
+        return None
     if p.returncode != 0:
         return None
     buffer = io.BytesIO(stdout)

@@ -222,7 +222,7 @@ def main():
     # with concurrent.futures.ThreadPoolExecutor(max_workers=available_clients.qsize()) as executor:
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         results = list(executor.map(
-            process_iamge_wrapper, data_loader(args.format, q_type, limit=20, dataset=args.dataset, png_path=args.png_path, provide_vec=True)))
+            process_iamge_wrapper, data_loader(args.format, q_type, limit=550, dataset=args.dataset, png_path=args.png_path, provide_vec=True)))
     print(results)
     with open("data/graphviz/questions_%s.json" % q_type, "w") as f:
         json.dump(results, f)

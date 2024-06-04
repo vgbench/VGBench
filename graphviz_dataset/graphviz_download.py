@@ -33,7 +33,7 @@ results = []
 
 n=len(graphviz_data)
 
-for idx in tqdm.tqdm(range(519, n)):
+for idx in tqdm.tqdm(range(638, n)):
     graphviz_sample = graphviz_data[idx]
     caption, graphviz = obtain_github_file_content(graphviz_sample['url'])
     if caption == None:

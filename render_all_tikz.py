@@ -4,8 +4,9 @@ import os
 
 def main():
     dataset = json.load(open("/home/zbc/research/datasets/datikz.json"))
-    for i, sample in enumerate(dataset):
-        print(i)
+    
+    for idx in range(0, len(dataset)):
+        sample = dataset[idx]
         code = sample['code']
         caption = sample['caption']
         out_file_path = os.path.join("pngs/tikz", "%d.png"%i)

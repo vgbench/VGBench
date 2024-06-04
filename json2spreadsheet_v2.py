@@ -10,13 +10,17 @@ def default_argument_parser():
     parser = argparse.ArgumentParser(description="convert json to spreadsheet")
     parser.add_argument(
         "--q-type", default="", required=True, help="the type of questions")
+    parser.add_argument(
+        "--format", choices=["tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
+
     return parser
 
 
 def main():
     args = default_argument_parser().parse_args()
     q_type = args.q_type
-    workbook = xlsxwriter.Workbook("./data/tikz_qa_%s.xlsx" % q_type)
+    v_format = args.format
+    workbook = xlsxwriter.Workbook("./data/%s/%s_qa_%s.xlsx" % (v_format, v_format, q_type))
     worksheet = workbook.add_worksheet()
     worksheet.write("A1", "QuestionIndex")
     worksheet.write("B1", "ImgIndex")
@@ -30,16 +34,16 @@ def main():
 
     worksheet.set_column_pixels('C:C', width=cell_width)
 
-    with open("./data/questions_%s.json" % q_type, "r") as f:
+    with open("./data/%s/questions_%s.json" % (v_format, q_type), "r") as f:
         questions = json.load(f)
 
     n_question = len(questions)
 
     for i, qid in enumerate(range(0, 500)):
-        question =questions[qid]
+        question = questions[qid]
         row_id = i+2
         worksheet.set_row_pixels(i+1, height=cell_height)
-        img = PIL.Image.open(os.path.join("pngs", "%d.png" % question['idx']))
+        img = PIL.Image.open(os.path.join("pngs/%s"%v_format, "%d.png" % question['idx']))
 
         buffered = BytesIO()
         img.save(buffered, format="PNG")

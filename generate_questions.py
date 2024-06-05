@@ -255,7 +255,7 @@ def process_image(client: OpenAI, caption: str, img: PIL.Image, vector_format: s
     return result
 
 
-def process_iamge_wrapper(args):
+def process_image_wrapper(args):
     idx, caption, vec_file_content, img, vector_format, q_type = args
     result = None
     while result is None:
@@ -307,13 +307,13 @@ def main():
     # with concurrent.futures.ThreadPoolExecutor(max_workers=available_clients.qsize()) as executor:
     # with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
     #     results = list(executor.map(
-    #         process_iamge_wrapper, data_loader(args.format, q_type, limit=550, dataset=args.dataset, png_path=args.png_path, provide_vec=True)))
+    #         process_image_wrapper, data_loader(args.format, q_type, limit=550, dataset=args.dataset, png_path=args.png_path, provide_vec=True)))
     results = []
     data_generator = data_loader(args.format, q_type, limit=550,
                                  dataset=args.dataset, png_path=args.png_path, provide_vec=False)
     # for data in tqdm.tqdm(data_generator):
-    #     results.append(process_iamge_wrapper(data))
-    results = process_map(process_iamge_wrapper,
+    #     results.append(process_image_wrapper(data))
+    results = process_map(process_image_wrapper,
                           data_generator, max_workers=16)
     print(results)
     with open("data/graphviz/questions_%s.json" % q_type, "w") as f:

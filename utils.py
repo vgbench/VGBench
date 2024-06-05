@@ -1,4 +1,4 @@
-from openai import OpenAI
+from openai import OpenAI, AzureOpenAI
 import typing
 import uuid
 import os
@@ -10,8 +10,10 @@ import re
 import typing
 import queue
 import io
+import multiprocessing
 
-def render_graphviz(code: str) ->PIL.Image.Image:
+
+def render_graphviz(code: str) -> PIL.Image.Image:
     command = ['dot', '-Tpng']
     p = subprocess.Popen(command, stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -27,6 +29,7 @@ def render_graphviz(code: str) ->PIL.Image.Image:
     except:
         return None
     return image
+
 
 def render_tikz(code: str) -> PIL.Image.Image:
     print(code)
@@ -101,17 +104,25 @@ def ask_gpt(client: OpenAI, messages: typing.List[typing.Dict[str, str]], model:
     return completion.choices[0].message.content
 
 
-def multi_ask(available_clients: queue.Queue, messages, model="gpt-4"):
+def multi_ask(available_keys: multiprocessing.Queue, messages, model="gpt-4"):
     success = False
     while not success:
-        client = available_clients.get()
+        key = available_keys.get()
+        client = AzureOpenAI(
+            api_version="2024-02-01",
+            azure_endpoint=key["GPT_ENDPOINT"],
+            api_key=key["GPT_KEY"],
+            timeout=10
+        )
+        # print("Querying", client.base_url)
         try:
             response = ask_gpt(client, messages, model=model)
             success = True
         except Exception as e:
             print("[GPT FAILED]", client.base_url, str(e))
-            if "ResponsibleAIPolicyViolation" in e:
+            if "ResponsibleAIPolicyViolation" in str(e):
                 response = None
-                success = True # we shouldn't try this sample again
-        available_clients.put(client)
+                success = True  # we shouldn't try this sample again
+        # print("Complete", client.base_url, response)
+        available_keys.put(key)
     return response

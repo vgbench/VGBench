@@ -3,7 +3,6 @@ import argparse
 import typing
 import utils
 import queue
-from openai import AzureOpenAI, OpenAI
 from keys import keys
 import tqdm
 import os
@@ -11,15 +10,11 @@ from tqdm.contrib.concurrent import process_map
 import functools
 import signal
 
-available_clients = queue.Queue()
+available_keys = queue.Queue()
 
 def init_client(model):
     for key in keys[model]:
-        available_clients.put(AzureOpenAI(
-            api_version="2024-02-01",
-            azure_endpoint=key["GPT_ENDPOINT"],
-            api_key=key["GPT_KEY"]
-        ))
+        available_keys.put(key)
 
 
 def default_argument_parser():
@@ -54,7 +49,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
             }
         ]
         # print(messages)
-        return utils.multi_ask(available_clients, messages, model)
+        return utils.multi_ask(available_keys, messages, model)
     elif prompt_type == "few-shot":
         messages = [
             {

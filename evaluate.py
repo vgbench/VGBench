@@ -81,7 +81,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
             }
         ]
         # print(messages)
-        return multi_ask(messages, model)
+        return utils.multi_ask(available_keys, messages, model)
     elif prompt_type == "chain-of-thought":
         messages = [
             {
@@ -101,7 +101,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
             "role": "user",
             "content": f"Carefully consider if the option A is correct"
         })
-        response = multi_ask(messages, model)
+        response = utils.multi_ask(available_keys, messages, model)
         messages.append({
             "role": "assistant",
             "content": response})
@@ -109,7 +109,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
             "role": "user",
             "content": f"Carefully consider if the option B is correct"
         })
-        response = multi_ask(messages, model)
+        response = utils.multi_ask(available_keys, messages, model)
         messages.append({
             "role": "assistant",
             "content": response})
@@ -117,7 +117,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
             "role": "user",
             "content": f"Carefully consider if the option C is correct"
         })
-        response = multi_ask(messages, model)
+        response = utils.multi_ask(available_keys, messages, model)
         messages.append({
             "role": "assistant",
             "content": response})
@@ -125,7 +125,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
             "role": "user",
             "content": f"Carefully consider if the option D is correct"
         })
-        response = multi_ask(messages, model)
+        response = utils.multi_ask(available_keys, messages, model)
         messages.append({
             "role": "assistant",
             "content": response})
@@ -136,7 +136,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
             "content": f"Which option is the best? Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response"
         })
         print(json.dumps(messages))
-        return multi_ask(messages, model)
+        return utils.multi_ask(available_keys, messages, model)
     else:
         raise ("Prompt strategy %s is not implemented" % prompt_type)
 

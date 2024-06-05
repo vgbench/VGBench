@@ -5,6 +5,8 @@ from openai import AzureOpenAI, OpenAI
 import typing
 import queue
 import json
+from tqdm.contrib.concurrent import process_map
+import functools
 
 available_clients = queue.Queue()
 
@@ -33,7 +35,7 @@ def init_client(model: typing.Literal["gpt-4", "gpt-4v"]):
         ))
 
 
-def generate(g_type: typing.Literal["svg"], caption: str):
+def generate(caption: str, g_type: typing.Literal["svg"]):
     if g_type == "svg":
         messages = [
             {
@@ -44,15 +46,28 @@ def generate(g_type: typing.Literal["svg"], caption: str):
                 "content": caption
             }]
         response = multi_ask(messages)
-        return response
+        lines = response.split("\n")
+        if lines[0].strip() == "```svg":
+            lines = lines[1:]
+            lines = lines[:-1]
+        return "\n".join(lines)
 
 
 def main():
     init_client("gpt-4")
     caption_data = json.load(open("data/svg-gen/captions.json"))
-    test_key = list(caption_data.keys())[0]
-    test_caption = caption_data[test_key]
-    print(generate("svg", test_caption))
+    list_of_keys = []
+    list_of_captions = []
+    for k, v in caption_data.items():
+        list_of_keys.append(k)
+        list_of_captions.append(v)
+    n = len(list_of_keys)
+    svgs = process_map(functools.partial(generate, g_type="svg"), list_of_captions)
+    result = {}
+    for i in range(n):
+        result[list_of_keys[i]] = svgs[i]
+
+    json.dump(result, open("data/svg-gen/generated_svgs.json", "w"))
 
 
 if __name__ == '__main__':

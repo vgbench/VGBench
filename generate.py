@@ -7,8 +7,15 @@ import queue
 import json
 from tqdm.contrib.concurrent import process_map
 import functools
+import argparse
 
 available_clients = queue.Queue()
+
+def default_argument_parser():
+    parser = argparse.ArgumentParser(description="convert json to spreadsheet")
+    parser.add_argument(
+        "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
+    return parser
 
 
 def multi_ask(messages, model="gpt-4"):
@@ -54,15 +61,16 @@ def generate(caption: str, g_type: typing.Literal["svg"]):
 
 
 def main():
+    args = default_argument_parser().parse_args()
     init_client("gpt-4")
-    caption_data = json.load(open("data/svg-gen/captions.json"))
+    caption_data = json.load(open("data/%s-gen/captions.json"%args.format))
     list_of_keys = []
     list_of_captions = []
     for k, v in caption_data.items():
         list_of_keys.append(k)
         list_of_captions.append(v)
     n = len(list_of_keys)
-    svgs = process_map(functools.partial(generate, g_type="svg"), list_of_captions)
+    svgs = process_map(functools.partial(generate, g_type=args.format), list_of_captions)
     result = {}
     for i in range(n):
         result[list_of_keys[i]] = svgs[i]

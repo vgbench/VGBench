@@ -11,9 +11,16 @@ import os
 from tqdm.contrib.concurrent import process_map
 import functools
 import json
+import argparse
 
 available_clients = queue.Queue()
 
+def default_argument_parser():
+    parser = argparse.ArgumentParser(description="convert json to spreadsheet")
+    parser.add_argument(
+        "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
+    parser.add_argument("--png-path", required=True)
+    return parser
 
 def multi_ask(messages, model="gpt-4"):
     success = False
@@ -62,9 +69,10 @@ def caption_img(path: str):
 
 
 def main():
+    args = default_argument_parser().parse_args()
     init_client("gpt-4v")
-    in_dir = "data/svg-gen/sampled_pngs"
-    out_dir = "data/sgv-gen/captions.json"
+    in_dir = args.png_path
+    out_dir = "data/%s-gen/captions.json"%args.format
     file_list = os.listdir(in_dir)
     file_list_complete_path = []
     n = len(file_list)
@@ -75,7 +83,7 @@ def main():
     result = {}
     for i in range(n):
         result[file_list[i]] = captions[i]
-    json.dump(result, open("data/svg-gen/captions.json", "w"))
+    json.dump(result, open("data/%s-gen/captions.json"%args.format, "w"))
 
 
 if __name__ == '__main__':

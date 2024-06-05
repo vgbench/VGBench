@@ -20,7 +20,10 @@ def main():
     args = default_argument_parser().parse_args()
     q_type = args.q_type
     v_format = args.format
-    workbook = xlsxwriter.Workbook("./data/%s/%s_qa_%s.xlsx" % (v_format, v_format, q_type))
+    start = 0
+    end = 550
+    workbook = xlsxwriter.Workbook(
+        "./data/%s/%s_qa_%s_%d_%d.xlsx" % (v_format, v_format, q_type, start, end))
     worksheet = workbook.add_worksheet()
     worksheet.write("A1", "QuestionIndex")
     worksheet.write("B1", "ImgIndex")
@@ -38,12 +41,12 @@ def main():
         questions = json.load(f)
 
     n_question = len(questions)
-
-    for i, qid in enumerate(range(0, 500)):
+    for i, qid in enumerate(range(start, end)):
         question = questions[qid]
         row_id = i+2
         worksheet.set_row_pixels(i+1, height=cell_height)
-        img = PIL.Image.open(os.path.join("pngs/%s"%v_format, "%d.png" % question['idx']))
+        img = PIL.Image.open(os.path.join("pngs/%s" %
+                             v_format, "%d.png" % question['idx']))
 
         buffered = BytesIO()
         img.save(buffered, format="PNG")

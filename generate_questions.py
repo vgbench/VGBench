@@ -8,16 +8,23 @@ import PIL.Image
 import os
 import concurrent.futures
 import queue
-from keys import keys
+from keys import keys, PERSONAL_GPT_KEY
 import argparse
+from tqdm.contrib.concurrent import process_map
+import tqdm
+
+# gpt_model = "gpt-4-turbo"
+gpt_model = "gpt-4v"
 
 available_clients = queue.Queue()
 
-for key in keys['gpt-4v']:
+# available_clients.put(OpenAI(api_key=PERSONAL_GPT_KEY))
+for key in keys[gpt_model]:
     available_clients.put(AzureOpenAI(
         api_version="2024-02-01",
         azure_endpoint=key["GPT_ENDPOINT"],
-        api_key=key["GPT_KEY"]
+        api_key=key["GPT_KEY"],
+        timeout=10
     ))
 
 
@@ -45,7 +52,7 @@ def generate_system_message(vector_format: str, qtype: str):
                     Unlike the example, you should focus on the type of the image.\
                     Ensuring that the correct answer is straightforward to identify for someone who actually view this image.\
                     You are NOT allowed to ask questions about any specific object in the image.\
-                    Do not add any additional character. Your output should start with \"{\" and end with \"}\"" % json.dumps(json_example)
+                    Do not add any additional character including \"`\". Your output should start with \"{\" and end with \"}\"" % json.dumps(json_example)
         elif qtype == "counting":
             json_example = {"q": "How many layers does this neural network have?",
                             "o": ["A: 2", "B: 3", "C: 4", "D: 5"],
@@ -124,17 +131,83 @@ def generate_system_message(vector_format: str, qtype: str):
                     Ensuring that the correct answer is straightforward to identify for someone who actually view this image.\
                     You are NOT allowed to ask questions about any specific object in the image.\
                     Do not add any additional character. Your output should start with \"{\" and end with \"}\"" % (json_example['q'], json_example['o'][0], json_example['o'][1], json_example['o'][2], json_example['o'][3], json.dumps(json_example))
+        elif qtype == "layout":
+            json_example = {"q": "Which of the following best describes the overall layout of the vector graphic?",
+                            "o": ["A: sequential top-to-bottom flow with nodes connected by arrows",
+                                  "B: A circular layout with nodes connected in a loop",
+                                  "C: A tree structure with branching nodes",
+                                  "D: A grid layout with interconnected nodes"],
+                            "a": "A"}
+            return "Generate a JSON object containing a quiz question based on an image rendered from an Graphviz file. \
+                    Your question should test the model's ability to describe the layout of the graph.\
+                    You can ask about orientation, but do not ask about counting. \
+                    Your question should be a general question, not those about any specific object in the image.\
+                    The caption is also provided to help you better curate the question, but note that the caption is not leaked to the observer. \
+                    If the caption does not clearly correspond to the image, just discard that caption, never over-rely on the it. \
+                    The question should be designed to test a model's perception to the image by making the correct answer evident only upon seeing the image. \
+                    Include four answer options, ensuring that the correct answer is straightforward to identify for someone who actually view this image. \
+                    Provide the JSON structure with fields for the question, the four options (labeled A, B, C, D), and the correct answer indicated. \
+                    Below is an example of how to structure the question, options and the answer within the JSON format. \
+                    Example 1: you propose a question :\"%s\" with the following four options,\n \
+                    %s\n \
+                    %s\n \
+                    %s\n \
+                    %s\n \
+                    If the correct answer is %s, you should output: %s \
+                    The example is just for illustrating the format, not for content. You shouldn't ask question in the same format as that in the example.\
+                    Ensuring that the correct answer is straightforward to identify for someone who actually view this image.\
+                    Do not add any additional character. Your output should start with \"{\" and end with \"}\"" % (json_example['q'], json_example['o'][0], json_example['o'][1], json_example['o'][2], json_example['o'][3], json_example['a'], json.dumps(json_example))
+
+    raise "Unknown type %s" % qtype
+
+
+def generate_dummy_response() -> dict:
+    response = {}
+    response['q'] = "Not able to parse"
+    response['a'] = "A"
+    response['o'] = ["A", "B", "C", "D"]
+    return response
+
+
+def scale_image(image: PIL.Image, max_edge: int = 1024) -> PIL.Image:
+    """
+    Scale the image so that its longest edge is equal to `max_edge` pixels.
+
+    :param image: PIL.Image object to be scaled.
+    :param max_edge: The size of the longest edge in the scaled image.
+    :return: Scaled PIL.Image object.
+    """
+    # Get current size of the image
+    width, height = image.size
+
+    # Calculate the scaling factor
+    if width > height:
+        new_width = max_edge
+        new_height = int((max_edge / width) * height)
+    else:
+        new_height = max_edge
+        new_width = int((max_edge / height) * width)
+
+    # Resize the image
+    scaled_image = image.resize((new_width, new_height), PIL.Image.LANCZOS)
+
+    return scaled_image
 
 
 def process_image(client: OpenAI, caption: str, img: PIL.Image, vector_format: str, q_type: str, vec_file_content: str):
+    if img.size[0] > 1024 or img.size[1] > 1024:
+        img = img.copy()
+        img = scale_image(img, 1024)
     buffered = BytesIO()
     img.save(buffered, format="PNG")
     image_base64 = base64.b64encode(buffered.getvalue()).decode()
+    system_message = generate_system_message(vector_format, q_type)
+    # print(system_message)
 
     messages = [
         {
             "role": "system",
-            "content": generate_system_message(vector_format, q_type)
+            "content": system_message
         },
         {
             "role": "user",
@@ -154,16 +227,31 @@ def process_image(client: OpenAI, caption: str, img: PIL.Image, vector_format: s
             "role": "user",
             "content": "The vector graphics file is %s" % vec_file_content
         })
-    # print(messages)
-    response = json.loads(utils.ask_gpt(
-        client=client, messages=messages, model="gpt-4v"))
+    try:
+        gpt_response = utils.ask_gpt(
+            client=client, messages=messages, model=gpt_model)
+    except Exception as e:
+        print("[GPT FAILED]", client.base_url, str(e))
+        if "ResponsibleAIPolicyViolation" in str(e):
+            gpt_response = json.dumps(generate_dummy_response())
+        else:
+            return None
+    if gpt_response.startswith("```json"):
+        gpt_response_lines = gpt_response.split("\n")
+        gpt_response = "\n".join(gpt_response_lines[1:-1])
+    try:
+        response = json.loads(gpt_response)
+    except Exception as e:
+        print("[PARSER FAILED]", gpt_response, e)
+        response = generate_dummy_response()
     # print(response)
     result = {}
     result['q'] = response['q']
     result['a'] = response['a']
     result['o'] = response['o']
     # result['img'] = img
-    assert (len(result['a']) == 1)
+    if result['a'] not in "A" and result['a'] not in "B" and result['a'] not in "C" and result['a'] not in "D":
+        return None
     return result
 
 
@@ -172,14 +260,11 @@ def process_iamge_wrapper(args):
     result = None
     while result is None:
         client = available_clients.get()
-        try:
-            result = process_image(client, caption, img, vector_format, q_type, vec_file_content)
-        except Exception as e:
-            # print(e)
-            pass
+        result = process_image(client, caption, img,
+                               vector_format, q_type, vec_file_content)
         available_clients.put(client)
     result['idx'] = idx
-    print(result)
+    # print(result)
     return result
 
 
@@ -220,9 +305,16 @@ def main():
     args = default_argument_parser().parse_args()
     q_type = args.q_type
     # with concurrent.futures.ThreadPoolExecutor(max_workers=available_clients.qsize()) as executor:
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-        results = list(executor.map(
-            process_iamge_wrapper, data_loader(args.format, q_type, limit=550, dataset=args.dataset, png_path=args.png_path, provide_vec=True)))
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+    #     results = list(executor.map(
+    #         process_iamge_wrapper, data_loader(args.format, q_type, limit=550, dataset=args.dataset, png_path=args.png_path, provide_vec=True)))
+    results = []
+    data_generator = data_loader(args.format, q_type, limit=550,
+                                 dataset=args.dataset, png_path=args.png_path, provide_vec=False)
+    # for data in tqdm.tqdm(data_generator):
+    #     results.append(process_iamge_wrapper(data))
+    results = process_map(process_iamge_wrapper,
+                          data_generator, max_workers=16)
     print(results)
     with open("data/graphviz/questions_%s.json" % q_type, "w") as f:
         json.dump(results, f)

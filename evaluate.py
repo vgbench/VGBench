@@ -22,10 +22,8 @@ def multi_ask(messages, model="gpt-4"):
             response = utils.ask_gpt(client, messages, model=model)
             success = True
         except Exception as e:
-            print(e)
-            continue
+            print("[GPT FAILED]", client.base_url, str(e))
         available_clients.put(client)
-        break
     return response
 
 def init_client(model):
@@ -43,6 +41,8 @@ def default_argument_parser():
         "--q-type", default="", required=True, help="the type of questions")
     parser.add_argument("--prompt-type", default="zero-shot",
                         choices=["zero-shot", "few-shot", "chain-of-thought"], required=True)
+    parser.add_argument(
+        "--format", choices=["tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
     return parser
 
 
@@ -186,7 +186,7 @@ def main():
 
     init_client(model)
 
-    dataset = json.load(open("data/final_dataset_%s.json" % q_type))
+    dataset = json.load(open("data/%s/final_dataset_%s.json" % (args.format, q_type)))
     few_shot_samples = dataset[0:3]
     test_samples = dataset[3:]
     pred_results = []
@@ -216,7 +216,7 @@ def main():
             tot_correct += 1
     print(round(tot_correct/tot_cnt, 3))
     json.dump(results, open(os.path.join(
-        "results", "%s_%s.json" % (q_type, prompt_type)), "w"))
+        "results/%s"%args.format, "%s_%s.json" % (q_type, prompt_type)), "w"))
 
 
 if __name__ == '__main__':

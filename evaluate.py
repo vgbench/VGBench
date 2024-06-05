@@ -2,15 +2,15 @@ import json
 import argparse
 import typing
 import utils
-import queue
 from keys import keys
 import tqdm
 import os
 from tqdm.contrib.concurrent import process_map
 import functools
 import signal
+import multiprocessing
 
-available_keys = queue.Queue()
+available_keys = multiprocessing.Queue()
 
 def init_client(model):
     for key in keys[model]:

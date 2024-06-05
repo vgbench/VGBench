@@ -150,6 +150,31 @@ def generate_system_message(vector_format: str, qtype: str):
                     The example is just for illustrating the format, not for content. You shouldn't ask question in the same format as that in the example.\
                     Ensuring that the correct answer is straightforward to identify for someone who actually view this image.\
                     Do not add any additional character. Your output should start with \"{\" and end with \"}\"" % (json_example['q'], json_example['o'][0], json_example['o'][1], json_example['o'][2], json_example['o'][3], json_example['a'], json.dumps(json_example))
+        elif qtype == "relation":
+            json_example = {"q": "In the given directed graph, which of the following statements accurately describes the relationship between the nodes?",
+                            "o": ["A: Node A has directed edges to both Node B and Node D.",
+                                  "B: Node B has a directed edge to Node A and Node D.",
+                                  "C: Node C has directed edges to both Node A and Node B.",
+                                  "D: Node A has directed edges to both Node B and Node C."],
+                            "a": "D"}
+            return "Generate a JSON object containing a quiz question based on an image rendered from an Graphviz file. \
+                    Your question should test the model's ability to understand the relationship between two specific elements.\
+                    Your question should focus on specific element, do not ask general questions. \
+                    The caption is also provided to help you better curate the question, but note that the caption is not leaked to the observer. \
+                    If the caption does not clearly correspond to the image, just discard that caption, never over-rely on the it. \
+                    The question should be designed to test a model's perception to the image by making the correct answer evident only upon seeing the image. \
+                    Include four answer options, ensuring that the correct answer is straightforward to identify for someone who actually view this image. \
+                    Provide the JSON structure with fields for the question, the four options (labeled A, B, C, D), and the correct answer indicated. \
+                    Below is an example of how to structure the question, options and the answer within the JSON format. \
+                    Example 1: you propose a question :\"%s\" with the following four options,\n \
+                    %s\n \
+                    %s\n \
+                    %s\n \
+                    %s\n \
+                    If the correct answer is %s, you should output: %s \
+                    The example is just for illustrating the format, not for content. You shouldn't ask question in the same format as that in the example.\
+                    Ensuring that the correct answer is straightforward to identify for someone who actually view this image.\
+                    Do not add any additional character. Your output should start with \"{\" and end with \"}\"" % (json_example['q'], json_example['o'][0], json_example['o'][1], json_example['o'][2], json_example['o'][3], json_example['a'], json.dumps(json_example))
 
     raise "Unknown type %s" % qtype
 
@@ -243,7 +268,7 @@ def process_image(caption: str, img: PIL.Image, vector_format: str, q_type: str,
 def process_image_wrapper(args):
     idx, caption, vec_file_content, img, vector_format, q_type = args
     result = process_image(caption, img,
-                               vector_format, q_type, vec_file_content)
+                           vector_format, q_type, vec_file_content)
     result['idx'] = idx
     # print(result)
     return result
@@ -291,13 +316,13 @@ def main():
     #         process_image_wrapper, data_loader(args.format, q_type, limit=550, dataset=args.dataset, png_path=args.png_path, provide_vec=True)))
     results = []
     data_generator = data_loader(args.format, q_type, limit=550,
-                                 dataset=args.dataset, png_path=args.png_path, provide_vec=False)
+                                 dataset=args.dataset, png_path=args.png_path, provide_vec=True)
     # for data in tqdm.tqdm(data_generator):
     #     results.append(process_image_wrapper(data))
     results = process_map(process_image_wrapper,
                           data_generator, max_workers=16)
     print(results)
-    with open("data/graphviz/questions_%s.json" % q_type, "w") as f:
+    with open("data/%s/questions_%s.json" % (args.format, q_type), "w") as f:
         json.dump(results, f)
 
 

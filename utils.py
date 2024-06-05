@@ -99,3 +99,19 @@ def ask_gpt(client: OpenAI, messages: typing.List[typing.Dict[str, str]], model:
     )
     assert (completion.choices[0].finish_reason == "stop")
     return completion.choices[0].message.content
+
+
+def multi_ask(available_clients: queue.Queue, messages, model="gpt-4"):
+    success = False
+    while not success:
+        client = available_clients.get()
+        try:
+            response = ask_gpt(client, messages, model=model)
+            success = True
+        except Exception as e:
+            print("[GPT FAILED]", client.base_url, str(e))
+            if "ResponsibleAIPolicyViolation" in e:
+                response = None
+                success = True # we shouldn't try this sample again
+        available_clients.put(client)
+    return response

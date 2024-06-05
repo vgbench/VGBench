@@ -27,6 +27,7 @@ def main():
     unannoted_dataset = json.load(
         open(args.dataset_path, "r"))
     questions = load_questions(args.format, q_type)
+    known_question = set()
     for file in os.listdir(directory):
         # print(file)
         data = pandas.read_excel(os.path.join(
@@ -37,6 +38,8 @@ def main():
             # print(row)
             idx = row['QuestionIndex']
             img_idx = row['ImgIndex']
+            assert(idx not in known_question)
+            known_question.add(idx)
             result.append(
                 {'idx': idx, 'data': unannoted_dataset[img_idx], 'query': questions[idx]})
     # print(result)

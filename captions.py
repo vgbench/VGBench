@@ -22,21 +22,6 @@ def default_argument_parser():
     parser.add_argument("--png-path", required=True)
     return parser
 
-def multi_ask(messages, model="gpt-4"):
-    success = False
-    while not success:
-        client = available_clients.get()
-        try:
-            response = utils.ask_gpt(client, messages, model=model)
-            success = True
-        except Exception as e:
-            print(e)
-            continue
-        available_clients.put(client)
-        break
-    return response
-
-
 def init_client(model: typing.Literal["gpt-4", "gpt-4v"]):
     for key in keys[model]:
         available_clients.put(AzureOpenAI(
@@ -45,7 +30,7 @@ def init_client(model: typing.Literal["gpt-4", "gpt-4v"]):
             api_key=key["GPT_KEY"]
         ))
 
-def caption_img(path: str):
+def caption_img(path: str) -> str:
     buffered = BytesIO()
     with PIL.Image.open(path) as img:
         img.save(buffered, format="PNG")
@@ -65,7 +50,7 @@ def caption_img(path: str):
             ]
         }
     ]
-    return  multi_ask(messages, model="gpt-4v")
+    return utils.multi_ask(available_clients, messages, model="gpt-4v")
 
 
 def main():
@@ -73,7 +58,7 @@ def main():
     init_client("gpt-4v")
     in_dir = args.png_path
     out_dir = "data/%s-gen/captions.json"%args.format
-    file_list = os.listdir(in_dir)
+    file_list = os.listdir(in_dir)[:200]
     file_list_complete_path = []
     n = len(file_list)
     for file in file_list:

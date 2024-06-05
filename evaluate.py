@@ -13,19 +13,6 @@ import signal
 
 available_clients = queue.Queue()
 
-
-def multi_ask(messages, model="gpt-4"):
-    success = False
-    while not success:
-        client = available_clients.get()
-        try:
-            response = utils.ask_gpt(client, messages, model=model)
-            success = True
-        except Exception as e:
-            print("[GPT FAILED]", client.base_url, str(e))
-        available_clients.put(client)
-    return response
-
 def init_client(model):
     for key in keys[model]:
         available_clients.put(AzureOpenAI(
@@ -67,7 +54,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
             }
         ]
         # print(messages)
-        return multi_ask(messages, model)
+        return utils.multi_ask(available_clients, messages, model)
     elif prompt_type == "few-shot":
         messages = [
             {

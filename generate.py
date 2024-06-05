@@ -11,26 +11,12 @@ import argparse
 
 available_clients = queue.Queue()
 
+
 def default_argument_parser():
     parser = argparse.ArgumentParser(description="convert json to spreadsheet")
     parser.add_argument(
         "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
     return parser
-
-
-def multi_ask(messages, model="gpt-4"):
-    success = False
-    while not success:
-        client = available_clients.get()
-        try:
-            response = utils.ask_gpt(client, messages, model=model)
-            success = True
-        except Exception as e:
-            print(e)
-            continue
-        available_clients.put(client)
-        break
-    return response
 
 
 def init_client(model: typing.Literal["gpt-4", "gpt-4v"]):
@@ -47,12 +33,12 @@ def generate(caption: str, g_type: typing.Literal["svg"]):
         messages = [
             {
                 "role": "system",
-                "content": "Generate a %s based on the caption below. You should output the compilable code without any additional information."%g_type
-            },{
+                "content": "Generate a %s based on the caption below. You should output the compilable code without any additional information." % g_type
+            }, {
                 "role": "user",
                 "content": caption
             }]
-        response = multi_ask(messages)
+        response = utils.multi_ask(available_clients, messages)
         lines = response.split("\n")
         if lines[0].strip() == "```svg":
             lines = lines[1:]
@@ -63,14 +49,15 @@ def generate(caption: str, g_type: typing.Literal["svg"]):
 def main():
     args = default_argument_parser().parse_args()
     init_client("gpt-4")
-    caption_data = json.load(open("data/%s-gen/captions.json"%args.format))
+    caption_data = json.load(open("data/%s-gen/captions.json" % args.format))
     list_of_keys = []
     list_of_captions = []
     for k, v in caption_data.items():
         list_of_keys.append(k)
         list_of_captions.append(v)
     n = len(list_of_keys)
-    svgs = process_map(functools.partial(generate, g_type=args.format), list_of_captions)
+    svgs = process_map(functools.partial(
+        generate, g_type=args.format), list_of_captions)
     result = {}
     for i in range(n):
         result[list_of_keys[i]] = svgs[i]

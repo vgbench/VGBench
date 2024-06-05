@@ -3,11 +3,9 @@ import utils
 import json
 from io import BytesIO
 import base64
-import xlsxwriter
 import PIL.Image
 import os
-import concurrent.futures
-import queue
+import multiprocessing
 from keys import keys, PERSONAL_GPT_KEY
 import argparse
 from tqdm.contrib.concurrent import process_map
@@ -16,16 +14,11 @@ import tqdm
 # gpt_model = "gpt-4-turbo"
 gpt_model = "gpt-4v"
 
-available_clients = queue.Queue()
+available_keys = multiprocessing.Queue()
 
-# available_clients.put(OpenAI(api_key=PERSONAL_GPT_KEY))
+# available_keys.put(OpenAI(api_key=PERSONAL_GPT_KEY))
 for key in keys[gpt_model]:
-    available_clients.put(AzureOpenAI(
-        api_version="2024-02-01",
-        azure_endpoint=key["GPT_ENDPOINT"],
-        api_key=key["GPT_KEY"],
-        timeout=10
-    ))
+    available_keys.put(key)
 
 
 def generate_system_message(vector_format: str, qtype: str):
@@ -194,7 +187,7 @@ def scale_image(image: PIL.Image, max_edge: int = 1024) -> PIL.Image:
     return scaled_image
 
 
-def process_image(client: OpenAI, caption: str, img: PIL.Image, vector_format: str, q_type: str, vec_file_content: str):
+def process_image(caption: str, img: PIL.Image, vector_format: str, q_type: str, vec_file_content: str):
     if img.size[0] > 1024 or img.size[1] > 1024:
         img = img.copy()
         img = scale_image(img, 1024)
@@ -227,15 +220,7 @@ def process_image(client: OpenAI, caption: str, img: PIL.Image, vector_format: s
             "role": "user",
             "content": "The vector graphics file is %s" % vec_file_content
         })
-    try:
-        gpt_response = utils.ask_gpt(
-            client=client, messages=messages, model=gpt_model)
-    except Exception as e:
-        print("[GPT FAILED]", client.base_url, str(e))
-        if "ResponsibleAIPolicyViolation" in str(e):
-            gpt_response = json.dumps(generate_dummy_response())
-        else:
-            return None
+    gpt_response = utils.multi_ask(available_keys, messages, gpt_model)
     if gpt_response.startswith("```json"):
         gpt_response_lines = gpt_response.split("\n")
         gpt_response = "\n".join(gpt_response_lines[1:-1])
@@ -257,12 +242,8 @@ def process_image(client: OpenAI, caption: str, img: PIL.Image, vector_format: s
 
 def process_image_wrapper(args):
     idx, caption, vec_file_content, img, vector_format, q_type = args
-    result = None
-    while result is None:
-        client = available_clients.get()
-        result = process_image(client, caption, img,
+    result = process_image(caption, img,
                                vector_format, q_type, vec_file_content)
-        available_clients.put(client)
     result['idx'] = idx
     # print(result)
     return result
@@ -304,7 +285,7 @@ def default_argument_parser():
 def main():
     args = default_argument_parser().parse_args()
     q_type = args.q_type
-    # with concurrent.futures.ThreadPoolExecutor(max_workers=available_clients.qsize()) as executor:
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=available_keys.qsize()) as executor:
     # with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
     #     results = list(executor.map(
     #         process_image_wrapper, data_loader(args.format, q_type, limit=550, dataset=args.dataset, png_path=args.png_path, provide_vec=True)))

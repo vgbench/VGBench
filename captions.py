@@ -32,6 +32,10 @@ def init_client(model: typing.Literal["gpt-4", "gpt-4v"]):
 def caption_img(path: str) -> str:
     buffered = BytesIO()
     with PIL.Image.open(path) as img:
+        if img.size[0] > 1024 or img.size[1] > 1024:
+            img = img.copy()
+            img = utils.scale_image(img, 1024)
+
         img.save(buffered, format="PNG")
     image_base64 = base64.b64encode(buffered.getvalue()).decode()
 
@@ -56,7 +60,7 @@ def main():
     args = default_argument_parser().parse_args()
     init_client("gpt-4v")
     in_dir = args.png_path
-    out_dir = "data/%s-gen/captions.json" % args.format
+    out_file = "data/%s-gen/captions.json" % args.format
     file_list = os.listdir(in_dir)[:200]
     file_list_complete_path = []
     n = len(file_list)
@@ -69,8 +73,9 @@ def main():
     assert (len(captions) == n)
     result = {}
     for i in range(n):
-        result[file_list[i]] = captions[i]
-    json.dump(result, open("data/%s-gen/captions.json" % args.format, "w"))
+        if captions[i] is not None:
+            result[file_list[i]] = captions[i]
+    json.dump(result, open(out_file, "w"))
 
 
 if __name__ == '__main__':

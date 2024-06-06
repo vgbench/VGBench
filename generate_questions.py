@@ -186,36 +186,10 @@ def generate_dummy_response() -> dict:
     response['o'] = ["A", "B", "C", "D"]
     return response
 
-
-def scale_image(image: PIL.Image, max_edge: int = 1024) -> PIL.Image:
-    """
-    Scale the image so that its longest edge is equal to `max_edge` pixels.
-
-    :param image: PIL.Image object to be scaled.
-    :param max_edge: The size of the longest edge in the scaled image.
-    :return: Scaled PIL.Image object.
-    """
-    # Get current size of the image
-    width, height = image.size
-
-    # Calculate the scaling factor
-    if width > height:
-        new_width = max_edge
-        new_height = int((max_edge / width) * height)
-    else:
-        new_height = max_edge
-        new_width = int((max_edge / height) * width)
-
-    # Resize the image
-    scaled_image = image.resize((new_width, new_height), PIL.Image.LANCZOS)
-
-    return scaled_image
-
-
 def process_image(caption: str, img: PIL.Image, vector_format: str, q_type: str, vec_file_content: str):
     if img.size[0] > 1024 or img.size[1] > 1024:
         img = img.copy()
-        img = scale_image(img, 1024)
+        img = utils.scale_image(img, 1024)
     buffered = BytesIO()
     img.save(buffered, format="PNG")
     image_base64 = base64.b64encode(buffered.getvalue()).decode()
@@ -246,22 +220,24 @@ def process_image(caption: str, img: PIL.Image, vector_format: str, q_type: str,
             "content": "The vector graphics file is %s" % vec_file_content
         })
     gpt_response = utils.multi_ask(available_keys, messages, gpt_model)
-    if gpt_response.startswith("```json"):
-        gpt_response_lines = gpt_response.split("\n")
-        gpt_response = "\n".join(gpt_response_lines[1:-1])
-    try:
-        response = json.loads(gpt_response)
-    except Exception as e:
-        print("[PARSER FAILED]", gpt_response, e)
+    if gpt_response is None:
         response = generate_dummy_response()
-    # print(response)
+    else:
+        if gpt_response.startswith("```json"):
+            gpt_response_lines = gpt_response.split("\n")
+            gpt_response = "\n".join(gpt_response_lines[1:-1])
+        try:
+            response = json.loads(gpt_response)
+        except Exception as e:
+            print("[PARSER FAILED]", gpt_response, e)
+            response = generate_dummy_response()
+    if response['a'] not in ["A", "B", "C", "D"]:
+        response = generate_dummy_response()
     result = {}
     result['q'] = response['q']
     result['a'] = response['a']
     result['o'] = response['o']
     # result['img'] = img
-    if result['a'] not in "A" and result['a'] not in "B" and result['a'] not in "C" and result['a'] not in "D":
-        return None
     return result
 
 
@@ -316,7 +292,7 @@ def main():
     #         process_image_wrapper, data_loader(args.format, q_type, limit=550, dataset=args.dataset, png_path=args.png_path, provide_vec=True)))
     results = []
     data_generator = data_loader(args.format, q_type, limit=550,
-                                 dataset=args.dataset, png_path=args.png_path, provide_vec=True)
+                                 dataset=args.dataset, png_path=args.png_path, provide_vec=False)
     # for data in tqdm.tqdm(data_generator):
     #     results.append(process_image_wrapper(data))
     results = process_map(process_image_wrapper,

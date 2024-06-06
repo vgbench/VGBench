@@ -108,12 +108,15 @@ def multi_ask(available_keys: multiprocessing.Queue, messages, model="gpt-4"):
     success = False
     while not success:
         key = available_keys.get()
-        client = AzureOpenAI(
-            api_version="2024-02-01",
-            azure_endpoint=key["GPT_ENDPOINT"],
-            api_key=key["GPT_KEY"],
-            timeout=10
-        )
+        if "GPT_ENDPOINT" in key.keys():
+            client = AzureOpenAI(
+                api_version="2024-02-01",
+                azure_endpoint=key["GPT_ENDPOINT"],
+                api_key=key["GPT_KEY"],
+                timeout=20
+            )
+        else:
+            pass
         # print("Querying", client.base_url)
         try:
             response = ask_gpt(client, messages, model=model)
@@ -126,3 +129,27 @@ def multi_ask(available_keys: multiprocessing.Queue, messages, model="gpt-4"):
         # print("Complete", client.base_url, response)
         available_keys.put(key)
     return response
+
+def scale_image(image: PIL.Image, max_edge: int = 1024) -> PIL.Image:
+    """
+    Scale the image so that its longest edge is equal to `max_edge` pixels.
+
+    :param image: PIL.Image object to be scaled.
+    :param max_edge: The size of the longest edge in the scaled image.
+    :return: Scaled PIL.Image object.
+    """
+    # Get current size of the image
+    width, height = image.size
+
+    # Calculate the scaling factor
+    if width > height:
+        new_width = max_edge
+        new_height = int((max_edge / width) * height)
+    else:
+        new_height = max_edge
+        new_width = int((max_edge / height) * width)
+
+    # Resize the image
+    scaled_image = image.resize((new_width, new_height), PIL.Image.LANCZOS)
+
+    return scaled_image

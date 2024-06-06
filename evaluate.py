@@ -25,10 +25,12 @@ def default_argument_parser():
                         choices=["zero-shot", "few-shot", "chain-of-thought"], required=True)
     parser.add_argument(
         "--format", choices=["tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
+    parser.add_argument(
+        "--model", choices=["gpt-4", "gpt-35-turbo"], default="", required=True, help="the model used to evaluate")
     return parser
 
 
-def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", "chain-of-thought"], few_shot_samples, model="gpt-4"):
+def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", "chain-of-thought"], few_shot_samples, model, vformat: str):
     code = sample['code']
     question = sample['question']
     options = sample['options']
@@ -37,7 +39,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
         messages = [
             {
                 "role": "system",
-                "content": "I will present a TikZ code. Please answer my questions only based on code. Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response"
+                "content": "I will present a {vformat} code. Please answer my questions only based on code. Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response"
             },
             {
                 "role": "user",
@@ -54,7 +56,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
         messages = [
             {
                 "role": "system",
-                "content": "I will present a TikZ code. Please answer my questions only based on code. Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response. For your reference, I will give you some example"
+                "content": "I will present a {vformat} code. Please answer my questions only based on code. Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response. For your reference, I will give you some example"
             }]
         for few_shot_sample in few_shot_samples:
             messages.append({
@@ -86,7 +88,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
         messages = [
             {
                 "role": "system",
-                "content": "I will present a TikZ code. Please answer my questions only based on code. Please consider the question step by step."
+                "content": "I will present a {vformat} code. Please answer my questions only based on code. Please consider the question step by step."
             },
             {
                 "role": "user",
@@ -162,7 +164,8 @@ def main():
     args = default_argument_parser().parse_args()
 
     prompt_type = args.prompt_type
-    model = "gpt-4"
+    # model = "gpt-4"
+    model = args.model
 
     q_type = args.q_type
 
@@ -179,7 +182,7 @@ def main():
     #     pred_results.append(check_question(
     #         sample, prompt_type, few_shot_samples_converted, model))
     pred_results = process_map(functools.partial(
-        check_question, prompt_type=prompt_type, few_shot_samples=few_shot_samples_converted, model=model), dataset_converted)
+        check_question, prompt_type=prompt_type, few_shot_samples=few_shot_samples_converted, model=model, vformat=args.format), dataset_converted)
     tot_correct = 0
     tot_cnt = 0
     results = []
@@ -198,7 +201,7 @@ def main():
             tot_correct += 1
     print(round(tot_correct/tot_cnt, 3))
     json.dump(results, open(os.path.join(
-        "results/%s"%args.format, "%s_%s.json" % (q_type, prompt_type)), "w"))
+        "results/%s"%args.format, "%s_%s_%s.json" % (model, q_type, prompt_type)), "w"))
 
 
 if __name__ == '__main__':

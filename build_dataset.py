@@ -42,6 +42,7 @@ def main():
             known_question.add(idx)
             result.append(
                 {'idx': idx, 'data': unannoted_dataset[img_idx], 'query': questions[idx]})
+    print("Total:", len(known_question))
     # print(result)
     json.dump(result, open("data/%s/final_dataset_%s.json" %
               (args.format, q_type), "w"))

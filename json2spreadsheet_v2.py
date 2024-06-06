@@ -4,14 +4,14 @@ import PIL.Image
 import os
 from io import BytesIO
 import argparse
-
+import tqdm
 
 def default_argument_parser():
     parser = argparse.ArgumentParser(description="convert json to spreadsheet")
     parser.add_argument(
         "--q-type", default="", required=True, help="the type of questions")
     parser.add_argument(
-        "--format", choices=["tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
+        "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
 
     return parser
 
@@ -20,8 +20,10 @@ def main():
     args = default_argument_parser().parse_args()
     q_type = args.q_type
     v_format = args.format
+
     start = 0
-    end = 550
+    end = 869
+
     workbook = xlsxwriter.Workbook(
         "./data/%s/%s_qa_%s_%d_%d.xlsx" % (v_format, v_format, q_type, start, end))
     worksheet = workbook.add_worksheet()
@@ -41,7 +43,7 @@ def main():
         questions = json.load(f)
 
     n_question = len(questions)
-    for i, qid in enumerate(range(start, end)):
+    for i, qid in tqdm.tqdm(list(enumerate((range(start, end))))):
         question = questions[qid]
         row_id = i+2
         worksheet.set_row_pixels(i+1, height=cell_height)
@@ -61,8 +63,6 @@ def main():
         worksheet.write("D%d" % row_id, question['q'])
         worksheet.write("E%d" % row_id, "\n".join(question['o']))
         worksheet.write("F%d" % row_id, question['a'])
-
-        print(i)
 
     workbook.close()
 

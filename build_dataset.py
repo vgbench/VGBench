@@ -10,7 +10,7 @@ def default_argument_parser():
     parser.add_argument(
         "--q-type", default="", required=True, help="the type of questions")
     parser.add_argument(
-        "--format", choices=["tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
+        "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
     return parser
 
 

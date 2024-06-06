@@ -24,7 +24,7 @@ def default_argument_parser():
     parser.add_argument("--prompt-type", default="zero-shot",
                         choices=["zero-shot", "few-shot", "chain-of-thought"], required=True)
     parser.add_argument(
-        "--format", choices=["tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
+        "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
     parser.add_argument(
         "--model", choices=["gpt-4", "gpt-35-turbo"], default="", required=True, help="the model used to evaluate")
     return parser
@@ -88,7 +88,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
         messages = [
             {
                 "role": "system",
-                "content": "I will present a {vformat} code. Please answer my questions only based on code. Please consider the question step by step."
+                "content": f"I will present a {vformat} code. Please answer my questions only based on code. Please consider the question step by step."
             },
             {
                 "role": "user",

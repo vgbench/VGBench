@@ -250,7 +250,7 @@ def process_image_wrapper(args):
     return result
 
 
-def data_loader(vector_format, q_type, limit, dataset: str, png_path: str, provide_vec: True):
+def data_loader(vector_format, q_type, limit, dataset: str, png_path: str, provide_vec: bool):
     idx = 0
     cnt = 0
     dataset = json.load(open(dataset))

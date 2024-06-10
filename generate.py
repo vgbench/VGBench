@@ -8,6 +8,7 @@ import json
 from tqdm.contrib.concurrent import process_map
 import functools
 import argparse
+import os
 
 available_keys = multiprocessing.Queue()
 
@@ -24,7 +25,7 @@ def init_client(model: typing.Literal["gpt-4", "gpt-4v"]):
         available_keys.put(key)
 
 
-def generate(caption: str, g_type: typing.Literal["svg"]):
+def generate(caption: str, g_type: typing.Literal["svg", "tikz", "graphviz"]):
     messages = [
         {
             "role": "system",
@@ -38,7 +39,21 @@ def generate(caption: str, g_type: typing.Literal["svg"]):
     if lines[0].strip().startswith() == "```":
         lines = lines[1:]
         lines = lines[:-1]
-    return "\n".join(lines)
+    result =  "\n".join(lines)
+    
+    return result
+
+def generate_wrapper(caption: str, g_type: typing.Literal["svg", "tikz", "graphviz"], filename:str) -> str:
+    target_file = os.path.join("data/%s-gen/tmp_generated"%g_type, filename)+".txt"
+    if os.path.exists(target_file):
+        with open(target_file) as file:
+            result = file.read()
+    else:
+        result = generate(caption, g_type)
+        with open(target_file, "w") as file:
+            file.write(result)
+
+    return result
 
 
 def main():
@@ -52,7 +67,7 @@ def main():
         list_of_captions.append(v)
     n = len(list_of_keys)
     svgs = process_map(functools.partial(
-        generate, g_type=args.format), list_of_captions)
+        generate_wrapper, g_type=args.format), zip(list_of_captions, list_of_keys))
     result = {}
     for i in range(n):
         result[list_of_keys[i]] = svgs[i]

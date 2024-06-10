@@ -20,7 +20,7 @@ def default_argument_parser():
     return parser
 
 
-def init_client(model: typing.Literal["gpt-4", "gpt-4v"]):
+def init_client(model: typing.Literal["gpt-4", "gpt-4v", "Mixtral-8x7B-Instruct-v0.1"]):
     for key in keys[model]:
         available_keys.put(key)
 
@@ -43,7 +43,8 @@ def generate(caption: str, g_type: typing.Literal["svg", "tikz", "graphviz"]):
     
     return result
 
-def generate_wrapper(caption: str, g_type: typing.Literal["svg", "tikz", "graphviz"], filename:str) -> str:
+def generate_wrapper(args: typing.Tuple[str, str], g_type: typing.Literal["svg", "tikz", "graphviz"]) -> str:
+    caption, filename = args
     target_file = os.path.join("data/%s-gen/tmp_generated"%g_type, filename)+".txt"
     if os.path.exists(target_file):
         with open(target_file) as file:
@@ -67,7 +68,7 @@ def main():
         list_of_captions.append(v)
     n = len(list_of_keys)
     svgs = process_map(functools.partial(
-        generate_wrapper, g_type=args.format), zip(list_of_captions, list_of_keys))
+        generate_wrapper, g_type=args.format), list(zip(list_of_captions, list_of_keys)))
     result = {}
     for i in range(n):
         result[list_of_keys[i]] = svgs[i]

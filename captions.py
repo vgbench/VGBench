@@ -24,7 +24,7 @@ def default_argument_parser():
     return parser
 
 
-def init_client(model: typing.Literal["gpt-4", "gpt-4v"]):
+def init_client(model: typing.Literal["gpt-4", "gpt-4v", "Mixtral-8x7B-Instruct-v0.1"]):
     for key in keys[model]:
         available_keys.put(key)
 

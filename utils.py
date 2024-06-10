@@ -116,9 +116,20 @@ def multi_ask(available_keys: multiprocessing.Queue, messages, model="gpt-4"):
                 timeout=20
             )
         else:
-            pass
+            client = OpenAI(
+                api_key=key["GPT_KEY"],
+                base_url=key["BASE_URL"]
+            )
         # print("Querying", client.base_url)
         try:
+            if "ALT_NAME" in key.keys():
+                model = key["ALT_NAME"]
+            if "NO_SYSTEM" in key.keys():
+                if messages[0]['role'] == "system":
+                    assert(messages[1]['role']=="user")
+                    messages[1]['content'] = messages[0]['content'] + messages[1]['content']
+                    del messages[0]
+                    # print(messages)
             response = ask_gpt(client, messages, model=model)
             success = True
         except Exception as e:

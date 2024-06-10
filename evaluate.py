@@ -27,8 +27,7 @@ def default_argument_parser():
     parser.add_argument(
         "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
     parser.add_argument(
-        "--model", choices=["gpt-4", "gpt-35-turbo"], default="", required=True, help="the model used to evaluate")
-    parser.add_argument("--eval", action='store_true')
+        "--model", choices=["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1"], default="", required=True, help="the model used to evaluate")
     return parser
 
 
@@ -45,11 +44,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
             },
             {
                 "role": "user",
-                "content": f"{code}"
-            },
-            {
-                "role": "user",
-                "content": f"Given this image, answer {question}. Options are {options_str}"
+                "content": f"\"{code}\". Given this image, answer {question}. Options are {options_str}"
             }
         ]
         # print(messages)

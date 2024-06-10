@@ -30,30 +30,39 @@ def init_client(model: typing.Literal["gpt-4", "gpt-4v"]):
 
 
 def caption_img(path: str) -> str:
-    buffered = BytesIO()
-    with PIL.Image.open(path) as img:
-        if img.size[0] > 1024 or img.size[1] > 1024:
-            img = img.copy()
-            img = utils.scale_image(img, 1024)
+    caption_file = os.path.join("data/svg-gen","%s.txt"%os.path.basename(path))
+    if os.path.exists(caption_file):
+        with open(caption_file) as file:
+            caption = file.read()
+    else:
+        buffered = BytesIO()
+        with PIL.Image.open(path) as img:
+            if img.size[0] > 1024 or img.size[1] > 1024:
+                img = img.copy()
+                img = utils.scale_image(img, 1024)
 
-        img.save(buffered, format="PNG")
-    image_base64 = base64.b64encode(buffered.getvalue()).decode()
+            img.save(buffered, format="PNG")
+        image_base64 = base64.b64encode(buffered.getvalue()).decode()
 
-    messages = [
-        {
-            "role": "system",
-            "content": "Generate a detailed caption for the given image. The reader of your caption should be able to replicate this picture."
-        },
-        {
-            "role": "user",
-            "content": [{
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/png;base64,%s" % image_base64},
+        messages = [
+            {
+                "role": "system",
+                "content": "Generate a detailed caption for the given image. The reader of your caption should be able to replicate this picture."
+            },
+            {
+                "role": "user",
+                "content": [{
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,%s" % image_base64},
+                }
+                ]
             }
-            ]
-        }
-    ]
-    return utils.multi_ask(available_keys, messages, model="gpt-4v")
+        ]
+        caption = utils.multi_ask(available_keys, messages, model="gpt-4v")
+        # print(caption)
+        with open(caption_file, "w") as file:
+            file.write(caption)
+    return caption
 
 
 def main():
@@ -61,7 +70,7 @@ def main():
     init_client("gpt-4v")
     in_dir = args.png_path
     out_file = "data/%s-gen/captions.json" % args.format
-    file_list = os.listdir(in_dir)[:200]
+    file_list = os.listdir(in_dir)[:2000]
     file_list_complete_path = []
     n = len(file_list)
     for file in file_list:

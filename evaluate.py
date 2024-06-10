@@ -26,7 +26,7 @@ def default_argument_parser():
     parser.add_argument(
         "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
     parser.add_argument(
-        "--model", choices=["gpt-4", "gpt-35-turbo"], default="", required=True, help="the model used to evaluate")
+        "--model", choices=["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1"], default="", required=True, help="the model used to evaluate")
     return parser
 
 
@@ -39,15 +39,11 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
         messages = [
             {
                 "role": "system",
-                "content": "I will present a {vformat} code. Please answer my questions only based on code. Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response"
+                "content": f"I will present a {vformat} code. Please answer my questions only based on code. Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response"
             },
             {
                 "role": "user",
-                "content": f"{code}"
-            },
-            {
-                "role": "user",
-                "content": f"Given this image, answer {question}. Options are {options_str}"
+                "content": f"\"{code}\". Given this image, answer {question}. Options are {options_str}"
             }
         ]
         # print(messages)
@@ -56,7 +52,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
         messages = [
             {
                 "role": "system",
-                "content": "I will present a {vformat} code. Please answer my questions only based on code. Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response. For your reference, I will give you some example"
+                "content": f"I will present a {vformat} code. Please answer my questions only based on code. Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response. For your reference, I will give you some example"
             }]
         for few_shot_sample in few_shot_samples:
             messages.append({

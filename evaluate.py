@@ -12,6 +12,7 @@ import multiprocessing
 
 available_keys = multiprocessing.Queue()
 
+
 def init_client(model):
     for key in keys[model]:
         available_keys.put(key)
@@ -27,6 +28,7 @@ def default_argument_parser():
         "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
     parser.add_argument(
         "--model", choices=["gpt-4", "gpt-35-turbo"], default="", required=True, help="the model used to evaluate")
+    parser.add_argument("--eval", action='store_true')
     return parser
 
 
@@ -39,7 +41,7 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
         messages = [
             {
                 "role": "system",
-                "content": "I will present a {vformat} code. Please answer my questions only based on code. Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response"
+                "content": f"I will present a {vformat} code. Please answer my questions only based on code. Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response"
             },
             {
                 "role": "user",
@@ -51,12 +53,13 @@ def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", 
             }
         ]
         # print(messages)
+        print(json.dumps(messages))
         return utils.multi_ask(available_keys, messages, model)
     elif prompt_type == "few-shot":
         messages = [
             {
                 "role": "system",
-                "content": "I will present a {vformat} code. Please answer my questions only based on code. Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response. For your reference, I will give you some example"
+                "content": f"I will present a {vformat} code. Please answer my questions only based on code. Answer and only answer the letter corresponding to the correct option. Do not add any additional comment in your response. For your reference, I will give you some example"
             }]
         for few_shot_sample in few_shot_samples:
             messages.append({
@@ -156,8 +159,6 @@ def signal_handler(sig, frame):
     os.killpg(0, signal.SIGTERM)
 
 
-
-
 def main():
     os.setpgrp()
     signal.signal(signal.SIGINT, signal_handler)
@@ -169,39 +170,49 @@ def main():
 
     q_type = args.q_type
 
-    init_client(model)
+    if args.eval:
+        results = json.load(open(os.path.join(
+            "results/%s" % args.format, "%s_%s_%s.json" % (model, q_type, prompt_type))))
+    else:
+        init_client(model)
 
-    dataset = json.load(open("data/%s/final_dataset_%s.json" % (args.format, q_type)))
-    few_shot_samples = dataset[0:3]
-    test_samples = dataset[3:]
-    pred_results = []
-    dataset_converted = map(convert_sample_format, test_samples)
-    few_shot_samples_converted = list(map(
-        functools.partial(convert_sample_format, ans=True), few_shot_samples))
-    # for sample in tqdm.tqdm(dataset_converted):
-    #     pred_results.append(check_question(
-    #         sample, prompt_type, few_shot_samples_converted, model))
-    pred_results = process_map(functools.partial(
-        check_question, prompt_type=prompt_type, few_shot_samples=few_shot_samples_converted, model=model, vformat=args.format), dataset_converted)
+        dataset = json.load(
+            open("data/%s/final_dataset_%s.json" % (args.format, q_type)))
+        few_shot_samples = dataset[0:3]
+        test_samples = dataset[3:]
+        pred_results = []
+        dataset_converted = map(convert_sample_format, test_samples)
+        few_shot_samples_converted = list(map(
+            functools.partial(convert_sample_format, ans=True), few_shot_samples))
+        # for sample in tqdm.tqdm(dataset_converted):
+        #     pred_results.append(check_question(
+        #         sample, prompt_type, few_shot_samples_converted, model))
+        wrapped_function = functools.partial(
+            check_question, prompt_type=prompt_type, few_shot_samples=few_shot_samples_converted, model=model, vformat=args.format)
+        pred_results = process_map(
+            wrapped_function, dataset_converted, max_workers=8)
+        results = []
+
+        for i, sample in enumerate(test_samples):
+
+            answer = sample['query']['a']
+            pred = pred_results[i]
+            qid = sample['idx']
+            image_id = sample['query']['idx']
+
+            results.append({"pred": pred, "qid": qid,
+                            "image_id": image_id, "answer": answer})
+        json.dump(results, open(os.path.join(
+            "results/%s" % args.format, "%s_%s_%s.json" % (model, q_type, prompt_type)), "w"))
+
     tot_correct = 0
     tot_cnt = 0
-    results = []
 
-    for i, sample in enumerate(test_samples):
+    for result in results:
         tot_cnt += 1
-        answer = sample['query']['a']
-        pred = pred_results[i]
-        qid = sample['idx']
-        image_id = sample['query']['idx']
-
-        results.append({"pred": pred, "qid": qid,
-                       "image_id": image_id, "answer": answer})
-
-        if pred == answer:
+        if result['pred'] == result['answer']:
             tot_correct += 1
     print(round(tot_correct/tot_cnt, 3))
-    json.dump(results, open(os.path.join(
-        "results/%s"%args.format, "%s_%s_%s.json" % (model, q_type, prompt_type)), "w"))
 
 
 if __name__ == '__main__':

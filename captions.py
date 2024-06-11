@@ -29,8 +29,8 @@ def init_client(model: typing.Literal["gpt-4", "gpt-4v", "Mixtral-8x7B-Instruct-
         available_keys.put(key)
 
 
-def caption_img(path: str) -> str:
-    caption_file = os.path.join("data/svg-gen","%s.txt"%os.path.basename(path))
+def caption_img(path: str, vformat: str) -> str:
+    caption_file = os.path.join(f"data/{vformat}-gen/tmp_captions","%s.txt"%os.path.basename(path))
     if os.path.exists(caption_file):
         with open(caption_file) as file:
             caption = file.read()
@@ -78,7 +78,7 @@ def main():
     captions = []
     # for file in file_list_complete_path:
     #     captions.append(caption_img(file))
-    captions = process_map(caption_img, file_list_complete_path, max_workers = 8)
+    captions = process_map(functools.partial(caption_img, vformat=args.format), file_list_complete_path, max_workers = 8)
     assert (len(captions) == n)
     result = {}
     for i in range(n):

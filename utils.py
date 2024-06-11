@@ -93,18 +93,18 @@ def render_tikz(code: str) -> PIL.Image.Image:
     return img[0]
 
 
-def ask_gpt(client: OpenAI, messages: typing.List[typing.Dict[str, str]], model: typing.Literal["gpt-35-turbo", "gpt-4", "gpt-4-32k", "gpt-4v"] = "gpt-4v"):
+def ask_gpt(client: OpenAI, messages: typing.List[typing.Dict[str, str]], model: typing.Literal["gpt-35-turbo", "gpt-4", "gpt-4-32k", "gpt-4v"]):
     completion = client.chat.completions.create(
         model=model,
         messages=messages,
         max_tokens=4096,
         temperature=0
     )
-    assert (completion.choices[0].finish_reason == "stop")
+    assert (completion.choices[0].finish_reason == "stop"), "Context length exceeded"
     return completion.choices[0].message.content
 
 
-def multi_ask(available_keys: multiprocessing.Queue, messages, model="gpt-4"):
+def multi_ask(available_keys: multiprocessing.Queue, messages, model):
     success = False
     while not success:
         key = available_keys.get()
@@ -113,7 +113,7 @@ def multi_ask(available_keys: multiprocessing.Queue, messages, model="gpt-4"):
                 api_version="2024-02-01",
                 azure_endpoint=key["GPT_ENDPOINT"],
                 api_key=key["GPT_KEY"],
-                timeout=20
+                timeout=30
             )
         else:
             client = OpenAI(
@@ -134,10 +134,11 @@ def multi_ask(available_keys: multiprocessing.Queue, messages, model="gpt-4"):
             success = True
         except Exception as e:
             print("[GPT FAILED]", client.base_url, str(e))
-            if "ResponsibleAIPolicyViolation" in str(e):
+            if "ResponsibleAIPolicyViolation" in str(e) or "Context length exceeded" in str(e):
                 response = None
                 success = True  # we shouldn't try this sample again
         # print("Complete", client.base_url, response)
+        client.close()
         available_keys.put(key)
     return response
 

@@ -28,7 +28,7 @@ def init_client(model: typing.Literal["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Ins
         available_keys.put(key)
 
 
-def generate(caption: str, g_type: typing.Literal["svg", "tikz", "graphviz"]):
+def generate(caption: str, g_type: typing.Literal["svg", "tikz", "graphviz"], model: typing.Literal["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1"]):
     messages = [
         {
             "role": "system",
@@ -37,7 +37,9 @@ def generate(caption: str, g_type: typing.Literal["svg", "tikz", "graphviz"]):
             "role": "user",
             "content": caption
         }]
-    response = utils.multi_ask(available_keys, messages)
+    response = utils.multi_ask(available_keys, messages, model=model)
+    if response == None:
+        return ""
     lines = response.split("\n")
     if lines[0].strip().startswith("```"):
         lines = lines[1:]
@@ -53,7 +55,7 @@ def generate_wrapper(args: typing.Tuple[str, str], g_type: typing.Literal["svg",
         with open(target_file) as file:
             result = file.read()
     else:
-        result = generate(caption, g_type)
+        result = generate(caption, g_type, model=model)
         with open(target_file, "w") as file:
             file.write(result)
 

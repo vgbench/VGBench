@@ -17,10 +17,13 @@ def default_argument_parser():
     parser = argparse.ArgumentParser(description="convert json to spreadsheet")
     parser.add_argument(
         "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
+    parser.add_argument(
+        "--model", choices=["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1"], default="", required=True, help="the model used to generate")
+
     return parser
 
 
-def init_client(model: typing.Literal["gpt-4", "gpt-4v", "Mixtral-8x7B-Instruct-v0.1"]):
+def init_client(model: typing.Literal["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1"]):
     for key in keys[model]:
         available_keys.put(key)
 
@@ -36,16 +39,16 @@ def generate(caption: str, g_type: typing.Literal["svg", "tikz", "graphviz"]):
         }]
     response = utils.multi_ask(available_keys, messages)
     lines = response.split("\n")
-    if lines[0].strip().startswith() == "```":
+    if lines[0].strip().startswith("```"):
         lines = lines[1:]
         lines = lines[:-1]
     result =  "\n".join(lines)
     
     return result
 
-def generate_wrapper(args: typing.Tuple[str, str], g_type: typing.Literal["svg", "tikz", "graphviz"]) -> str:
+def generate_wrapper(args: typing.Tuple[str, str], g_type: typing.Literal["svg", "tikz", "graphviz"], model: typing.Literal["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1"]) -> str:
     caption, filename = args
-    target_file = os.path.join("data/%s-gen/tmp_generated"%g_type, filename)+".txt"
+    target_file = os.path.join("data/%s-gen/tmp_generated/%s"%(g_type, model), filename)+".txt"
     if os.path.exists(target_file):
         with open(target_file) as file:
             result = file.read()
@@ -59,7 +62,7 @@ def generate_wrapper(args: typing.Tuple[str, str], g_type: typing.Literal["svg",
 
 def main():
     args = default_argument_parser().parse_args()
-    init_client("gpt-4")
+    init_client(args.model)
     caption_data = json.load(open("data/%s-gen/captions.json" % args.format))
     list_of_keys = []
     list_of_captions = []
@@ -68,7 +71,7 @@ def main():
         list_of_captions.append(v)
     n = len(list_of_keys)
     svgs = process_map(functools.partial(
-        generate_wrapper, g_type=args.format), list(zip(list_of_captions, list_of_keys)))
+        generate_wrapper, g_type=args.format, model=args.model), list(zip(list_of_captions, list_of_keys)))
     result = {}
     for i in range(n):
         result[list_of_keys[i]] = svgs[i]

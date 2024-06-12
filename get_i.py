@@ -17,7 +17,7 @@ def default_argument_parser():
 def main():
     args = default_argument_parser().parse_args()
     dataset = json.load(open(args.dataset_path))
-    print(dataset[args.idx])
+    print(dataset[args.idx]['code'])
 
 if __name__ == '__main__':
     main()

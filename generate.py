@@ -78,7 +78,7 @@ def main():
     for i in range(n):
         result[list_of_keys[i]] = svgs[i]
 
-    json.dump(result, open("data/%s-gen/generated.json"%args.format, "w"))
+    json.dump(result, open("data/%s-gen/generated_%s.json"%(args.format, args.model), "w"))
 
 
 if __name__ == '__main__':

@@ -28,6 +28,7 @@ def default_argument_parser():
         "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
     parser.add_argument(
         "--model", choices=["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1"], default="", required=True, help="the model used to evaluate")
+    parser.add_argument("--eval", action='store_true')
     return parser
 
 

@@ -73,7 +73,7 @@ def main():
         list_of_captions.append(v)
     n = len(list_of_keys)
     svgs = process_map(functools.partial(
-        generate_wrapper, g_type=args.format, model=args.model), list(zip(list_of_captions, list_of_keys)))
+        generate_wrapper, g_type=args.format, model=args.model), list(zip(list_of_captions, list_of_keys)), chunksize=1, max_workers=8)
     result = {}
     for i in range(n):
         result[list_of_keys[i]] = svgs[i]

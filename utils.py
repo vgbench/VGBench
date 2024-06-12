@@ -32,7 +32,7 @@ def render_graphviz(code: str) -> PIL.Image.Image:
 
 
 def render_tikz(code: str) -> PIL.Image.Image:
-    print(code)
+    # print(code)
     pattern = r'(\\begin\{tikzpicture\}.*?\\end\{tikzpicture\})'
     matches = re.findall(pattern, code, re.DOTALL)
     if len(matches) > 1:
@@ -113,7 +113,7 @@ def multi_ask(available_keys: multiprocessing.Queue, messages, model):
                 api_version="2024-02-01",
                 azure_endpoint=key["GPT_ENDPOINT"],
                 api_key=key["GPT_KEY"],
-                timeout=30
+                timeout=40
             )
         else:
             client = OpenAI(

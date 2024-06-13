@@ -20,6 +20,7 @@ def default_argument_parser():
     parser.add_argument(
         "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
     parser.add_argument("--png-path", required=True)
+    return parser
 
 def evaluate_sim_img_text(img: Image, caption: str):
     image_processed = preprocess(img).unsqueeze(0).to(device)
@@ -40,12 +41,19 @@ def main():
     # svg_data = json.load(open(svg_path))
     caption_data = json.load(open(caption_path))
     clip_score = 0
+    cnt = 0
     for key in tqdm.tqdm(caption_data.keys()):
-        image = Image.open(os.path.join(args.png_path, key))
+        img_path = os.path.join(args.png_path, key)
+        if not os.path.exists(img_path):
+            print("[WARNING] %s not found"%img_path)
+            continue
+        image = Image.open(img_path)
         caption = caption_data[key]
         clip_score += evaluate_sim_img_text(image, caption)
-    print(clip_score/len(caption_data.keys()))
+        cnt += 1
+    print(clip_score/cnt)
 
 
 if __name__ == '__main__':
     main()
+

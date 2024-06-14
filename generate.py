@@ -58,6 +58,7 @@ def generate_wrapper(args: typing.Tuple[str, str], g_type: typing.Literal["svg",
         result = generate(caption, g_type, model=model)
         with open(target_file, "w") as file:
             file.write(result)
+        print(target_file)
 
     return result
 

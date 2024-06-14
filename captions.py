@@ -30,7 +30,7 @@ def init_client(model: typing.Literal["gpt-4", "gpt-4v", "Mixtral-8x7B-Instruct-
 
 
 def caption_img(path: str, vformat: str) -> str:
-    caption_file = os.path.join(f"data/{vformat}-gen/tmp_captions","%s.txt"%os.path.basename(path))
+    caption_file = os.path.join(f"data/{vformat}/tmp_captions","%s.txt"%os.path.basename(path))
     if os.path.exists(caption_file):
         with open(caption_file) as file:
             caption = file.read()
@@ -69,7 +69,7 @@ def main():
     args = default_argument_parser().parse_args()
     init_client("gpt-4v")
     in_dir = args.png_path
-    out_file = "data/%s-gen/captions.json" % args.format
+    out_file = "data/%s/captions.json" % args.format
     file_list = os.listdir(in_dir)[:2000]
     file_list_complete_path = []
     n = len(file_list)

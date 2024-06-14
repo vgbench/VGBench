@@ -37,7 +37,7 @@ def default_argument_parser():
 
 
 def check_question(sample, prompt_type: typing.Literal["zero-shot", "few-shot", "zero-shot-cot"], few_shot_samples, model, qtype:str, vformat: str):
-    msg_dir = "results/%s/%s-msgs-%s-%s" % (vformat, model, qtype, prompt_type)
+    msg_dir = "results_vqa/%s/%s-msgs-%s-%s" % (vformat, model, qtype, prompt_type)
 
     if not os.path.exists(msg_dir):
         os.mkdir(msg_dir)

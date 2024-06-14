@@ -21,8 +21,8 @@ def main():
     q_type = args.q_type
     v_format = args.format
 
-    start = 0
-    end = 869
+    start = 500
+    end = 1000
 
     workbook = xlsxwriter.Workbook(
         "./data/%s/%s_qa_%s_%d_%d.xlsx" % (v_format, v_format, q_type, start, end))

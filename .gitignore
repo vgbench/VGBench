@@ -1,6 +1,7 @@
 __pycache__
 pngs
 data
-results
+results_vqa
+results_gen
 keys.py
 log

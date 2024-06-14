@@ -18,8 +18,8 @@ def default_argument_parser():
 
 def main():
     args = default_argument_parser().parse_args()
-    dataset = json.load(open("data/%s-gen/generated_%s.json"%(args.format, args.model)))
-    out_dir = "data/%s-gen/generated_pngs/%s"%(args.format, args.model)
+    dataset = json.load(open("results_gen/%s/generated_%s.json"%(args.format, args.model)))
+    out_dir = "results_gen/%s/generated_pngs/%s"%(args.format, args.model)
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
     for k, code in tqdm.tqdm(list(dataset.items())):

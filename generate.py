@@ -50,7 +50,7 @@ def generate(caption: str, g_type: typing.Literal["svg", "tikz", "graphviz"], mo
 
 def generate_wrapper(args: typing.Tuple[str, str], g_type: typing.Literal["svg", "tikz", "graphviz"], model: typing.Literal["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1"]) -> str:
     caption, filename = args
-    target_file = os.path.join("data/%s-gen/tmp_generated/%s"%(g_type, model), filename)+".txt"
+    target_file = os.path.join("results_gen/%s/tmp_generated/%s"%(g_type, model), filename)+".txt"
     if os.path.exists(target_file):
         with open(target_file) as file:
             result = file.read()
@@ -66,7 +66,7 @@ def generate_wrapper(args: typing.Tuple[str, str], g_type: typing.Literal["svg",
 def main():
     args = default_argument_parser().parse_args()
     init_client(args.model)
-    caption_data = json.load(open("data/%s-gen/captions.json" % args.format))
+    caption_data = json.load(open("data/%s/captions.json" % args.format))
     list_of_keys = []
     list_of_captions = []
     for k, v in caption_data.items():
@@ -79,7 +79,7 @@ def main():
     for i in range(n):
         result[list_of_keys[i]] = svgs[i]
 
-    json.dump(result, open("data/%s-gen/generated_%s.json"%(args.format, args.model), "w"))
+    json.dump(result, open("results_gen/%s/generated_%s.json"%(args.format, args.model), "w"))
 
 
 if __name__ == '__main__':

@@ -36,8 +36,8 @@ def evaluate_sim_img_text(img: Image, caption: str):
 
 def main():
     args = default_argument_parser().parse_args()
-    # svg_path = "data/svg-gen/generated_svgs.json"
-    caption_path = "data/%s-gen/captions.json"%args.format
+    # svg_path = "results_gen/svg/generated_svgs.json"
+    caption_path = "data/%s/captions.json"%args.format
     # svg_data = json.load(open(svg_path))
     caption_data = json.load(open(caption_path))
     clip_score = 0

@@ -2,7 +2,7 @@ import pandas
 import argparse
 import os
 import json
-
+import numpy as np
 
 def default_argument_parser():
     parser = argparse.ArgumentParser(description="convert json to spreadsheet")
@@ -27,12 +27,16 @@ def main():
     unannoted_dataset = json.load(
         open(args.dataset_path, "r"))
     questions = load_questions(args.format, q_type)
+    total_questions = 0
     known_question = set()
     for file in os.listdir(directory):
         # print(file)
         data = pandas.read_excel(os.path.join(
             directory, file), engine="openpyxl")
         for _, row in data.iterrows():
+            if np.isnan(row['Valid']):
+                continue
+            total_questions += 1
             if row['Valid'] != 1:
                 continue
             # print(row)
@@ -42,6 +46,7 @@ def main():
             known_question.add(idx)
             result.append(
                 {'idx': idx, 'data': unannoted_dataset[img_idx], 'query': questions[idx]})
+    print("Passing Rate:", len(known_question)/total_questions)
     print("Total:", len(known_question))
     # print(result)
     json.dump(result, open("data/%s/final_dataset_%s.json" %

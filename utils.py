@@ -20,6 +20,7 @@ def render_graphviz(code: str) -> PIL.Image.Image:
     try:
         stdout, stderr = p.communicate(input=code.encode(), timeout=3)
     except:
+        p.terminate()
         return None
     if p.returncode != 0:
         return None

@@ -35,33 +35,37 @@ def caption_img(path: str, vformat: str) -> str:
         with open(caption_file) as file:
             caption = file.read()
     else:
-        buffered = BytesIO()
-        with PIL.Image.open(path) as img:
-            if img.size[0] > 1024 or img.size[1] > 1024:
-                img = img.copy()
-                img = utils.scale_image(img, 1024)
+        try:
+            buffered = BytesIO()
+            with PIL.Image.open(path) as img:
+                if img.size[0] > 1024 or img.size[1] > 1024:
+                    img = img.copy()
+                    img = utils.scale_image(img, 1024)
 
-            img.save(buffered, format="PNG")
-        image_base64 = base64.b64encode(buffered.getvalue()).decode()
+                img.save(buffered, format="PNG")
+            image_base64 = base64.b64encode(buffered.getvalue()).decode()
 
-        messages = [
-            {
-                "role": "system",
-                "content": "Generate a detailed caption for the given image. The reader of your caption should be able to replicate this picture."
-            },
-            {
-                "role": "user",
-                "content": [{
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/png;base64,%s" % image_base64},
+            messages = [
+                {
+                    "role": "system",
+                    "content": "Generate a detailed caption for the given image. The reader of your caption should be able to replicate this picture."
+                },
+                {
+                    "role": "user",
+                    "content": [{
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/png;base64,%s" % image_base64},
+                    }
+                    ]
                 }
-                ]
-            }
-        ]
-        caption = utils.multi_ask(available_keys, messages, model="gpt-4v")
-        # print(caption)
-        with open(caption_file, "w") as file:
-            file.write(caption)
+            ]
+            caption = utils.multi_ask(available_keys, messages, model="gpt-4v")
+            # print(caption)
+            if caption is not None:
+                with open(caption_file, "w") as file:
+                    file.write(caption)
+        except:
+            return None
     return caption
 
 

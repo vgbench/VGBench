@@ -19,7 +19,6 @@ def main():
     args = default_argument_parser().parse_args()
     dataset = json.load(open(args.dataset_path))
     for idx in tqdm.tqdm(list(range(0, len(dataset)))):
-        print(idx)
         sample = dataset[idx]
         code = sample['code']
         caption = sample['caption']

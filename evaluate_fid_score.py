@@ -84,7 +84,10 @@ class ImagePathDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, i):
         path = self.files[i]
-        img = Image.open(path).convert('RGB')
+        try:
+            img = Image.open(path).convert('RGB')
+        except:
+            print(path)
         if self.transforms is not None:
             img = self.transforms(img)
         return img
@@ -320,3 +323,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

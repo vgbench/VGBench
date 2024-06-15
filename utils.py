@@ -139,7 +139,7 @@ def multi_ask(available_keys: multiprocessing.Queue, messages, model):
             success = True
         except Exception as e:
             print("[GPT FAILED]", client.base_url, str(e))
-            if "ResponsibleAIPolicyViolation" in str(e) or "Context length exceeded" in str(e):
+            if "ResponsibleAIPolicyViolation" in str(e) or "Context length exceeded" in str(e) or "This model's maximum context length " in str(e):
                 response = None
                 success = True  # we shouldn't try this sample again
         # print("Complete", client.base_url, response)

@@ -27,6 +27,10 @@ def render_graphviz(code: str) -> PIL.Image.Image:
     buffer = io.BytesIO(stdout)
     try:
         image = PIL.Image.open(buffer)
+        if image.mode == 'RGBA':
+            bg = PIL.Image.new('RGB', image.size, (255, 255, 255))
+            bg.paste(image, (0, 0), image)
+            image = bg
     except:
         return None
     return image

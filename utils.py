@@ -18,7 +18,7 @@ def render_graphviz(code: str) -> PIL.Image.Image:
     p = subprocess.Popen(command, stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     try:
-        stdout, stderr = p.communicate(input=code.encode(), timeout=3)
+        stdout, stderr = p.communicate(input=code.encode(), timeout=10)
     except:
         p.terminate()
         return None

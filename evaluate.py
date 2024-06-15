@@ -28,11 +28,12 @@ def default_argument_parser():
     parser.add_argument(
         "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
     parser.add_argument(
-        "--model", choices=["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1"], default="", required=True, help="the model used to evaluate")
+        "--model", choices=["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1", "Llama-3-8B-Instruct-262k"], default="", required=True, help="the model used to evaluate")
     parser.add_argument("--min", type=int, default=0,
                         help="filter the lower bound of the lenght of the vector graphics")
     parser.add_argument("--max", type=int, default=math.inf,
                         help="filter the upper bound of the lenght of the vector graphics")
+    parser.add_argument("--single", action='store_true')
     return parser
 
 
@@ -200,10 +201,15 @@ def main():
     # for sample in tqdm.tqdm(dataset_converted):
     #     pred_results.append(check_question(
     #         sample, prompt_type, few_shot_samples_converted, model, qtype=args.qtype))
+    
     wrapped_function = functools.partial(
         check_question, prompt_type=prompt_type, few_shot_samples=few_shot_samples_converted, model=model, qtype=args.q_type, vformat=args.format)
-    response_messages = process_map(
-        wrapped_function, list(dataset_converted), max_workers=8)
+    if args.single:
+        for sample in tqdm.tqdm(list(dataset_converted)):
+            response_messages.append(wrapped_function(sample))
+    else:
+        response_messages = process_map(
+            wrapped_function, list(dataset_converted), max_workers=8)
     results = []
 
     for i, sample in enumerate(test_samples):
@@ -221,8 +227,10 @@ def main():
     tot_cnt = 0
 
     for result in results:
+        if result['msg'][-1]['content'] is None:
+            continue
         tot_cnt += 1
-        if result['msg'][-1]['content'] == result['answer']:
+        if result['msg'][-1]['content'][0] == result['answer']:
             tot_correct += 1
     print("Accuracy:", round(tot_correct/tot_cnt, 3))
 

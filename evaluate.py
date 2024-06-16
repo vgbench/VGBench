@@ -28,7 +28,7 @@ def default_argument_parser():
     parser.add_argument(
         "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
     parser.add_argument(
-        "--model", choices=["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1", "Llama-3-8B-Instruct-262k"], default="", required=True, help="the model used to evaluate")
+        "--model", choices=["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1", "Llama-3-8B-Instruct-262k", "Llama-3-70B-Instruct-Gradient-262k"], default="", required=True, help="the model used to evaluate")
     parser.add_argument("--min", type=int, default=0,
                         help="filter the lower bound of the lenght of the vector graphics")
     parser.add_argument("--max", type=int, default=math.inf,
@@ -230,6 +230,7 @@ def main():
         if result['msg'][-1]['content'] is None:
             continue
         tot_cnt += 1
+        assert(result['msg'][-1]['role'] == "assistant")
         if result['msg'][-1]['content'][0] == result['answer']:
             tot_correct += 1
     print("Accuracy:", round(tot_correct/tot_cnt, 3))

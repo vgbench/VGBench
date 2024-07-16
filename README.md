@@ -8,7 +8,7 @@
 
 <div align="center">
 
-[![Project Page](https://img.shields.io/badge/Project-Page-green.svg)](https://vgbench.github.io/) [![arXiv Paper](https://img.shields.io/badge/arxiv-2403.20271-ECA8A7?logo=arxiv)](https://arxiv.org/abs/2407.10972) [![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-blue.svg)](https://github.com/vgbench/VGBench/blob/main/LICENSE)
+[![Project Page](https://img.shields.io/badge/Project-Page-green.svg)](https://vgbench.github.io/) [![arXiv Paper](https://img.shields.io/badge/arxiv-2407.10972-ECA8A8?logo=arxiv)](https://arxiv.org/abs/2407.10972) [![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-blue.svg)](https://github.com/vgbench/VGBench/blob/main/LICENSE)
 
 [[🌐 Project Page](https://vgbench.github.io/)] [[📖 Paper](https://arxiv.org/abs/2407.10972)] [[🤗 VGQA](https://huggingface.co/datasets/vgbench/VGQA)] [[🤗 VGen](https://huggingface.co/datasets/vgbench/VGen)]
 

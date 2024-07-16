@@ -6,7 +6,7 @@ import base64
 import PIL.Image
 import os
 import multiprocessing
-from keys import keys, PERSONAL_GPT_KEY
+from keys import keys
 import argparse
 from tqdm.contrib.concurrent import process_map
 import tqdm
@@ -16,7 +16,6 @@ gpt_model = "gpt-4v"
 
 available_keys = multiprocessing.Queue()
 
-# available_keys.put(OpenAI(api_key=PERSONAL_GPT_KEY))
 for key in keys[gpt_model]:
     available_keys.put(key)
 

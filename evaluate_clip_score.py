@@ -12,8 +12,7 @@ import os
 import argparse
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-# model, preprocess = clip.load('ViT-B/32', download_root="/staging/bzou24/checkpoints", device=device)
-model, preprocess = longclip.load("/staging/bzou24/checkpoints/longclip-L.pt", device=device)
+model, preprocess = longclip.load("longclip-L.pt", device=device)
 
 def default_argument_parser():
     parser = argparse.ArgumentParser(description="convert json to spreadsheet")

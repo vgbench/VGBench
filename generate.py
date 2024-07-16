@@ -14,7 +14,7 @@ available_keys = multiprocessing.Queue()
 
 
 def default_argument_parser():
-    parser = argparse.ArgumentParser(description="convert json to spreadsheet")
+    parser = argparse.ArgumentParser(description="Generate Vector Graphics")
     parser.add_argument(
         "--format", choices=["svg", "tikz", "graphviz"], default="", required=True, help="the format of the vector graphics")
     parser.add_argument(

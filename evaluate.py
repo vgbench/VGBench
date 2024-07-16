@@ -20,7 +20,7 @@ def init_client(model):
 
 
 def default_argument_parser():
-    parser = argparse.ArgumentParser(description="convert json to spreadsheet")
+    parser = argparse.ArgumentParser(description="Evaluate VGQA Dataset")
     parser.add_argument(
         "--q-type", default="", required=True, help="the type of questions")
     parser.add_argument("--prompt-type", default="zero-shot",
@@ -30,9 +30,9 @@ def default_argument_parser():
     parser.add_argument(
         "--model", choices=["gpt-4", "gpt-35-turbo", "Mixtral-8x7B-Instruct-v0.1", "Llama-3-8B-Instruct-262k", "Llama-3-70B-Instruct-Gradient-262k"], default="", required=True, help="the model used to evaluate")
     parser.add_argument("--min", type=int, default=0,
-                        help="filter the lower bound of the lenght of the vector graphics")
+                        help="filter the lower bound of the length of the vector graphics")
     parser.add_argument("--max", type=int, default=math.inf,
-                        help="filter the upper bound of the lenght of the vector graphics")
+                        help="filter the upper bound of the length of the vector graphics")
     parser.add_argument("--single", action='store_true')
     return parser
 

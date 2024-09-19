@@ -16,6 +16,7 @@
 
 ## 💥 News
 
+- **[2024.09.19]** 🔥 VGBench is accepted to EMNLP 2024 main conference!
 - **[2024.07.15]** 🔥 We released the [VGQA](https://huggingface.co/datasets/vgbench/VGen) dataset.
 
 ## 🛠️ Install 
